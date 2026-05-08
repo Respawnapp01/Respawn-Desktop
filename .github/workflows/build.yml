@@ -8,13 +8,25 @@ on:
 jobs:
   build-windows:
     runs-on: windows-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 18
-      - run: npm install
-      - run: npm run build-win
+      - name: Install dependencies
+        run: npm install
+      - name: Build exe
+        run: npx electron-builder --win --publish never
+      - name: Delete old release if exists
+        run: gh release delete v1.0.0 --yes || true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create Release
+        run: gh release create v1.0.0 dist/*.exe --title "Respawn v1.0.0" --notes "Respawn Desktop for Windows"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/upload-artifact@v4
         with:
           name: respawn-windows
