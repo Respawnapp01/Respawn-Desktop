@@ -1,46 +1,36 @@
-# Respawn Desktop — Build Instructions
+# Respawn — The Social App for Gamers 🎮
 
-## What you need
-- Node.js (you already have it)
-- A Windows PC to build the .exe (or use GitHub Actions)
+Find your squad. Join groups. Chat. Play together.
 
-## Setup on your Mac first
+## Download
 
-1. Copy this folder to your Desktop
-2. Add your icon files:
-   - `icon.ico` — Windows icon (256x256 .ico file)
-   - `icon.icns` — Mac icon (optional)
-   
-   You can convert your logo.png to .ico at: https://convertio.co/png-ico/
+**[⬇️ Download for Windows](https://github.com/Respawnapp01/Respawn-Desktop/releases/latest)**
 
-3. Install dependencies:
-   ```
-   cd ~/Desktop/respawn-desktop
-   npm install
-   ```
+> Also available as a web app at **[respawnapp.uk](https://respawnapp.uk)**
 
-4. Test it locally:
-   ```
-   npm start
-   ```
+## Features
 
-## Build the Windows .exe
+- 🎮 Gaming-focused social platform
+- 👥 Find friends and build your squad
+- 💬 Group chats and direct messages
+- 🔍 Discover groups by game, platform and region
+- 🤖 Ren — AI gaming assistant built in
+- 🎨 Fully customisable themes and colours
+- 📢 Real-time notifications
 
-### Option A — On a Windows PC:
-```
-npm install
-npm run build-win
-```
-Output will be in `dist/` folder — share the `.exe` installer
+## Platforms
 
-### Option B — GitHub Actions (build from Mac):
-1. Push this folder to a GitHub repo
-2. Add this workflow file at `.github/workflows/build.yml`
-3. GitHub will build the .exe for you automatically
+| Platform | Status |
+|----------|--------|
+| Windows | ✅ Available |
+| Web | ✅ Available at respawnapp.uk |
+| Android PWA | ✅ Install from browser |
+| iOS PWA | ✅ Install from Safari |
 
-## What the app does
-- Opens respawnapp.uk in a native window
-- Sits in system tray when minimised
-- Shows native Windows notifications
-- Single instance — won't open twice
-- Auto-updates since it loads from your live URL
+## Auto Updates
+
+The Windows app updates silently in the background. You'll get a notification when a new version is ready to install.
+
+---
+
+Made with ❤️ by the Respawn team
