@@ -10,6 +10,11 @@
   "build": {
     "appId": "uk.respawnapp.respawn",
     "productName": "Respawn",
+    "publish": {
+      "provider": "github",
+      "owner": "Respawnapp01",
+      "repo": "Respawn-Desktop"
+    },
     "win": {
       "target": "nsis",
       "icon": "icon.ico"

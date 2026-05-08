@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Tray, Menu, nativeImage, Notification, shell, dialog } = require('electron')
+const { app, BrowserWindow, Tray, Menu, nativeImage, Notification, shell } = require('electron')
 const { autoUpdater } = require('electron-updater')
 const path = require('path')
 
@@ -15,17 +15,31 @@ function setupAutoUpdater() {
   autoUpdater.autoDownload = true
   autoUpdater.autoInstallOnAppQuit = true
 
+  // Configure to check GitHub releases
+  autoUpdater.setFeedURL({
+    provider: 'github',
+    owner: 'Respawnapp01',
+    repo: 'Respawn-Desktop'
+  })
+
+  autoUpdater.on('checking-for-update', () => {
+    console.log('Checking for updates...')
+  })
+
   autoUpdater.on('update-available', () => {
-    // Silent download — don't bother the user
-    console.log('Update available, downloading silently...')
+    console.log('Update available — downloading silently...')
+  })
+
+  autoUpdater.on('update-not-available', () => {
+    console.log('App is up to date')
   })
 
   autoUpdater.on('update-downloaded', () => {
-    // Show notification that update is ready
+    // Show notification when update is ready
     if (Notification.isSupported()) {
       const notif = new Notification({
         title: 'Respawn Update Ready 🚀',
-        body: 'A new version has been downloaded. Restart to apply.',
+        body: 'Click to restart and install the latest version',
         icon: path.join(__dirname, 'icon.ico'),
       })
       notif.on('click', () => {
@@ -33,13 +47,34 @@ function setupAutoUpdater() {
       })
       notif.show()
     }
+
+    // Also update tray menu to show restart option
+    if (tray) {
+      const contextMenu = Menu.buildFromTemplate([
+        {
+          label: '🚀 Restart to Update',
+          click: () => autoUpdater.quitAndInstall(false, true)
+        },
+        { type: 'separator' },
+        {
+          label: 'Open Respawn',
+          click: () => { mainWindow.show(); mainWindow.focus() }
+        },
+        { type: 'separator' },
+        {
+          label: 'Quit Respawn',
+          click: () => { app.isQuiting = true; app.quit() }
+        }
+      ])
+      tray.setContextMenu(contextMenu)
+    }
   })
 
   autoUpdater.on('error', (err) => {
-    console.log('Auto updater error:', err)
+    console.log('Auto updater error:', err?.message || err)
   })
 
-  // Check for updates every 30 minutes
+  // Check on startup then every 30 minutes
   autoUpdater.checkForUpdatesAndNotify()
   setInterval(() => autoUpdater.checkForUpdatesAndNotify(), 30 * 60 * 1000)
 }
@@ -105,7 +140,7 @@ function createTray() {
     }
   ])
 
-  tray.setToolTip('Respawn — Find Your Squad')
+  tray.setToolTip('Respawn — Find Your Squad 🎮')
   tray.setContextMenu(contextMenu)
 
   tray.on('click', () => {
@@ -121,8 +156,8 @@ function createTray() {
 app.whenReady().then(() => {
   createWindow()
   createTray()
-  // Start auto updater after app loads
-  setTimeout(setupAutoUpdater, 3000)
+  // Start auto updater 5 seconds after launch
+  setTimeout(setupAutoUpdater, 5000)
 })
 
 const gotLock = app.requestSingleInstanceLock()
