@@ -5,8 +5,7 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build-win": "electron-builder --win",
-    "build-mac": "electron-builder --mac"
+    "build-win": "electron-builder --win --publish never"
   },
   "build": {
     "appId": "uk.respawnapp.respawn",
@@ -14,10 +13,6 @@
     "win": {
       "target": "nsis",
       "icon": "icon.ico"
-    },
-    "mac": {
-      "target": "dmg",
-      "icon": "icon.icns"
     },
     "nsis": {
       "oneClick": false,
@@ -30,5 +25,6 @@
   "devDependencies": {
     "electron": "^28.0.0",
     "electron-builder": "^24.0.0"
-  }
+  },
+  "author": "Respawn"
 }
