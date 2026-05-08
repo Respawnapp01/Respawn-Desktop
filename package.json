@@ -5,17 +5,11 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build-win": "electron-builder --win --publish always"
+    "build-win": "electron-builder --win --publish never"
   },
   "build": {
     "appId": "uk.respawnapp.respawn",
     "productName": "Respawn",
-    "publish": {
-      "provider": "github",
-      "owner": "Respawnapp01",
-      "repo": "Respawn-Desktop",
-      "releaseType": "release"
-    },
     "win": {
       "target": "nsis",
       "icon": "icon.ico"
