@@ -4,4 +4,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
   minimize: () => ipcRenderer.send('minimize'),
   maximize: () => ipcRenderer.send('maximize'),
   close: () => ipcRenderer.send('close'),
+  checkForUpdates: () => ipcRenderer.send('check-updates'),
 })

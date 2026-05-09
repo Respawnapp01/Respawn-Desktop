@@ -175,6 +175,7 @@ function createTray() {
 ipcMain.on('minimize', () => mainWindow?.minimize())
 ipcMain.on('maximize', () => { if (mainWindow?.isMaximized()) mainWindow.unmaximize(); else mainWindow?.maximize() })
 ipcMain.on('close', () => mainWindow?.hide())
+ipcMain.on('check-updates', () => autoUpdater.checkForUpdatesAndNotify())
 
 // ── AUTO UPDATER ──
 function setupAutoUpdater() {
