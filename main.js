@@ -58,7 +58,7 @@ function createSplash() {
 </head>
 <body>
   <div class="card">
-    <div class="title">Re<span>spawn</span></div>
+    <div class="title">Respawn</div>
     <div class="bar"><div class="fill"></div></div>
     <div class="sub">FIND YOUR SQUAD</div>
   </div>
@@ -90,11 +90,14 @@ function createWindow() {
   mainWindow.webContents.on('did-finish-load', () => {
     // Inject custom titlebar
     mainWindow.webContents.insertCSS(`
-      body { padding-top: 32px !important; }
+      body { padding-top: 36px !important; }
+      .sidenav, #mob-tabbar { top: 36px !important; }
+      .page { top: 36px !important; }
+      #page-welcome, #page-auth { top: 36px !important; }
       #respawn-titlebar {
         position: fixed !important;
         top: 0 !important; left: 0 !important; right: 0 !important;
-        height: 32px !important;
+        height: 36px !important;
         background: #0d1117 !important;
         border-bottom: 1px solid #21262d !important;
         display: flex !important;
@@ -105,7 +108,7 @@ function createWindow() {
         -webkit-app-region: drag !important;
         user-select: none !important;
       }
-      .tb-logo { display: flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 700; color: #fff; letter-spacing: 0.08em; }
+      .tb-logo { display: flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 700; color: #fff; letter-spacing: 0; }
       .tb-logo span { color: #00e5ff; }
       .tb-btns { display: flex; gap: 2px; -webkit-app-region: no-drag; }
       .tb-btn { width: 28px; height: 22px; border: none; background: none; cursor: pointer; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #8b949e; font-size: 12px; transition: background 0.15s, color 0.15s; }
@@ -121,7 +124,7 @@ function createWindow() {
             <svg width="14" height="14" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M16 10 H48 Q54 10 54 16 V38 Q54 44 48 44 H28 L18 54 V44 H16 Q10 44 10 38 V16 Q10 10 16 10 Z" stroke="#00e5ff" stroke-width="3.5" stroke-linejoin="round"/>
             </svg>
-            Re<span>spawn</span>
+            Re<span style="color:#00e5ff">spawn</span>
           </div>
           <div class="tb-btns">
             <button class="tb-btn" id="tb-min" title="Minimise">─</button>
@@ -182,7 +185,17 @@ function setupAutoUpdater() {
   autoUpdater.autoDownload = true
   autoUpdater.autoInstallOnAppQuit = true
   autoUpdater.setFeedURL({ provider: 'github', owner: 'Respawnapp01', repo: 'Respawn-Desktop' })
+  autoUpdater.on('checking-for-update', () => console.log('Checking for updates...'))
+  autoUpdater.on('update-available', () => {
+    if (mainWindow) mainWindow.webContents.executeJavaScript(`if(typeof toast==='function')toast('Update found! Downloading... 🚀','info');`).catch(()=>{})
+  })
+  autoUpdater.on('update-not-available', () => {
+    if (mainWindow) mainWindow.webContents.executeJavaScript(`if(typeof toast==='function')toast('Respawn is up to date ✅','success');`).catch(()=>{})
+  })
   autoUpdater.on('update-downloaded', () => {
+    if (mainWindow) {
+      mainWindow.webContents.executeJavaScript(`if(typeof toast==='function')toast('Update ready! Restart to install 🚀','success');`).catch(()=>{})
+    }
     if (Notification.isSupported()) {
       const n = new Notification({ title: 'Respawn Update Ready 🚀', body: 'Click to restart and install', icon: path.join(__dirname, 'icon.ico') })
       n.on('click', () => autoUpdater.quitAndInstall(false, true))

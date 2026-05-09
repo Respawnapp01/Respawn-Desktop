@@ -1,6 +1,6 @@
 {
   "name": "respawn",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "The social app for gamers",
   "main": "main.js",
   "scripts": {
@@ -19,14 +19,17 @@
     },
     "win": {
       "target": "nsis",
-      "icon": "icon.ico"
+      "icon": "icon.ico",
+      "executableName": "Respawn"
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Respawn"
+      "shortcutName": "Respawn",
+      "installerIcon": "icon.ico",
+      "uninstallerIcon": "icon.ico"
     }
   },
   "dependencies": {
