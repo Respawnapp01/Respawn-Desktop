@@ -20,15 +20,15 @@ jobs:
       - name: Build exe
         run: npx electron-builder --win --publish never
       - name: Delete old release if exists
-        run: gh release delete v1.0.2 --yes || true
+        run: gh release delete v1.0.3 --yes || true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Delete old tag if exists
-        run: git push origin :refs/tags/v1.0.2 || true
+        run: git push origin :refs/tags/v1.0.3 || true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Create Release
-        run: gh release create v1.0.2 dist/*.exe dist/*.yml dist/*.blockmap --title "Respawn v1.0.2" --notes "Splash screen, titlebar fixes, auto-update notifications"
+        run: gh release create v1.0.3 dist/*.exe dist/*.yml dist/*.blockmap --title "Respawn v1.0.3" --notes "Splash screen, titlebar fixes, auto-update notifications"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/upload-artifact@v4

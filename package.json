@@ -1,6 +1,6 @@
 {
   "name": "respawn",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "The social app for gamers",
   "main": "main.js",
   "scripts": {

@@ -45,7 +45,14 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1280, height: 820,
     minWidth: 800, minHeight: 600,
-    frame: false, backgroundColor: '#090b0f',
+    // Use titleBarOverlay — native Windows titlebar area, no CSS fighting
+    titleBarStyle: 'hidden',
+    titleBarOverlay: {
+      color: '#0d1117',
+      symbolColor: '#8b949e',
+      height: 36
+    },
+    backgroundColor: '#090b0f',
     icon: path.join(__dirname, 'icon.ico'),
     webPreferences: {
       nodeIntegration: false, contextIsolation: true,
@@ -57,56 +64,14 @@ function createWindow() {
 
   mainWindow.loadURL(RESPAWN_URL)
 
+  // Inject minimal CSS to account for the 36px overlay area
   mainWindow.webContents.on('did-finish-load', () => {
-    const TB_H = 36
     mainWindow.webContents.insertCSS(`
-      #_rtb {
-        position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important;
-        height: ${TB_H}px !important; z-index: 2147483647 !important;
-        background: #0d1117 !important; border-bottom: 1px solid #21262d !important;
-        display: flex !important; align-items: center !important;
-        justify-content: space-between !important;
-        padding-left: 14px !important;
-        -webkit-app-region: drag !important; user-select: none !important;
-        transition: opacity .2s !important;
-      }
-      #_rtb.hide { opacity: 0 !important; pointer-events: none !important; }
-      ._rtb-logo { display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:#fff;font-family:Rajdhani,"Segoe UI",sans-serif;letter-spacing:.04em;white-space:nowrap }
-      ._rtb-logo em { color:#00e5ff;font-style:normal }
-      ._rtb-btns { display:flex;-webkit-app-region:no-drag;height:${TB_H}px }
-      ._rtb-btn { width:46px;height:${TB_H}px;border:none;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#8b949e;font-size:14px;transition:background .15s,color .15s }
-      ._rtb-btn:hover { background:rgba(255,255,255,.08);color:#fff }
-      ._rtb-btn._close:hover { background:#c42b1c;color:#fff }
-      body { padding-top: ${TB_H}px !important; }
-      .sidenav { top: ${TB_H}px !important; height: calc(100vh - ${TB_H}px) !important; }
-      .main-area { top: ${TB_H}px !important; }
-      .sidebar-panel { top: ${TB_H}px !important; }
-      #mob-tabbar { bottom: 0 !important; }
-      #page-welcome, #page-auth { top: ${TB_H}px !important; height: calc(100vh - ${TB_H}px) !important; }
-    `)
-
-    mainWindow.webContents.executeJavaScript(`
-      if (!document.getElementById('_rtb')) {
-        const b = document.createElement('div');
-        b.id = '_rtb';
-        b.innerHTML = \`
-          <div class="_rtb-logo">
-            <svg width="15" height="15" viewBox="0 0 64 64" fill="none">
-              <path d="M16 10H48Q54 10 54 16V38Q54 44 48 44H28L18 54V44H16Q10 44 10 38V16Q10 10 16 10Z" stroke="#00e5ff" stroke-width="3.5" stroke-linejoin="round"/>
-            </svg>
-            Re<em>spawn</em>
-          </div>
-          <div class="_rtb-btns">
-            <button class="_rtb-btn" id="_tb_min">&#x2500;</button>
-            <button class="_rtb-btn" id="_tb_max">&#x25A1;</button>
-            <button class="_rtb-btn _close" id="_tb_cls">&#x2715;</button>
-          </div>
-        \`;
-        document.body.insertBefore(b, document.body.firstChild);
-        document.getElementById('_tb_min').onclick = () => window.electronAPI?.minimize();
-        document.getElementById('_tb_max').onclick = () => window.electronAPI?.maximize();
-        document.getElementById('_tb_cls').onclick = () => window.electronAPI?.close();
-      }
+      body { padding-top: 36px !important; }
+      .sidenav { top: 36px !important; height: calc(100vh - 36px) !important; }
+      .main-area { top: 36px !important; }
+      .sidebar-panel { top: 36px !important; }
+      #page-welcome, #page-auth { padding-top: 36px !important; }
     `)
 
     setTimeout(() => {
@@ -115,22 +80,24 @@ function createWindow() {
     }, 2400)
   })
 
-  // Hide/show titlebar on fullscreen
+  // Remove extra padding in fullscreen
   mainWindow.on('enter-full-screen', () => {
-    mainWindow.webContents.executeJavaScript(`
-      const b=document.getElementById('_rtb');if(b)b.classList.add('hide');
-      document.body.style.paddingTop='0';
-      const sn=document.querySelector('.sidenav');if(sn){sn.style.top='0';sn.style.height='100vh';}
-      const ma=document.querySelector('.main-area');if(ma)ma.style.top='0';
-    `).catch(()=>{})
+    mainWindow.setTitleBarOverlay({ height: 0 })
+    mainWindow.webContents.insertCSS(`
+      body { padding-top: 0 !important; }
+      .sidenav { top: 0 !important; height: 100vh !important; }
+      .main-area { top: 0 !important; }
+      .sidebar-panel { top: 0 !important; }
+    `)
   })
   mainWindow.on('leave-full-screen', () => {
-    mainWindow.webContents.executeJavaScript(`
-      const b=document.getElementById('_rtb');if(b)b.classList.remove('hide');
-      document.body.style.paddingTop='36px';
-      const sn=document.querySelector('.sidenav');if(sn){sn.style.top='36px';sn.style.height='calc(100vh - 36px)';}
-      const ma=document.querySelector('.main-area');if(ma)ma.style.top='36px';
-    `).catch(()=>{})
+    mainWindow.setTitleBarOverlay({ color: '#0d1117', symbolColor: '#8b949e', height: 36 })
+    mainWindow.webContents.insertCSS(`
+      body { padding-top: 36px !important; }
+      .sidenav { top: 36px !important; height: calc(100vh - 36px) !important; }
+      .main-area { top: 36px !important; }
+      .sidebar-panel { top: 36px !important; }
+    `)
   })
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
