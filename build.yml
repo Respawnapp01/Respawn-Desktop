@@ -28,7 +28,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Create Release
-        run: gh release create v1.0.2 dist/*.exe dist/*.yml dist/*.blockmap --title "Respawn v1.0.2" --notes "Custom titlebar, overlap fix, update notifications"
+        run: gh release create v1.0.2 dist/*.exe dist/*.yml dist/*.blockmap --title "Respawn v1.0.2" --notes "Splash screen, titlebar fixes, auto-update notifications"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/upload-artifact@v4

@@ -9,61 +9,42 @@ Menu.setApplicationMenu(null)
 // ── SPLASH SCREEN ──
 function createSplash() {
   splashWindow = new BrowserWindow({
-    width: 400,
-    height: 400,
+    width: 380,
+    height: 380,
     frame: false,
     transparent: true,
     alwaysOnTop: true,
     skipTaskbar: true,
     resizable: false,
+    center: true,
     webPreferences: { nodeIntegration: true, contextIsolation: false }
   })
   splashWindow.loadURL(`data:text/html,<!DOCTYPE html>
-<html>
-<head>
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    background: transparent;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-    font-family: 'Segoe UI', sans-serif;
-    -webkit-app-region: drag;
-  }
-  .card {
-    background: #0d1117;
-    border: 1px solid #21262d;
-    border-radius: 20px;
-    width: 320px;
-    height: 320px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 20px;
-    box-shadow: 0 0 60px rgba(0,229,255,0.15), 0 20px 60px rgba(0,0,0,0.8);
-    animation: fadeIn 0.4s ease;
-  }
-  @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-  img { width: 100px; height: 100px; object-fit: contain; }
-  .title { font-size: 28px; font-weight: 700; color: #fff; letter-spacing: 0.1em; }
-  .title span { color: #00e5ff; }
-  .bar { width: 160px; height: 3px; background: #21262d; border-radius: 2px; overflow: hidden; }
-  .fill { height: 100%; background: #00e5ff; border-radius: 2px; animation: load 1.8s ease forwards; box-shadow: 0 0 8px #00e5ff; }
-  @keyframes load { from { width: 0; } to { width: 100%; } }
-  .sub { font-size: 12px; color: #8b949e; letter-spacing: 0.08em; }
-</style>
-</head>
-<body>
-  <div class="card">
-    <div class="title">Respawn</div>
-    <div class="bar"><div class="fill"></div></div>
-    <div class="sub">FIND YOUR SQUAD</div>
+<html><head><style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:transparent;display:flex;align-items:center;justify-content:center;height:100vh;-webkit-app-region:drag}
+.card{background:#0d1117;border:1px solid #21262d;border-radius:24px;width:300px;height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;box-shadow:0 0 80px rgba(0,229,255,0.2),0 20px 60px rgba(0,0,0,.9);animation:pop .4s cubic-bezier(.175,.885,.32,1.275)}
+@keyframes pop{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:scale(1)}}
+.logo{display:flex;flex-direction:column;align-items:center;gap:12px}
+.title{font-family:'Segoe UI',sans-serif;font-size:32px;font-weight:800;color:#fff;letter-spacing:.06em}
+.title span{color:#00e5ff}
+.bar{width:180px;height:3px;background:#21262d;border-radius:2px;overflow:hidden}
+.fill{height:100%;background:linear-gradient(90deg,#00e5ff,#7c3aed);border-radius:2px;animation:load 2s ease forwards;box-shadow:0 0 10px #00e5ff}
+@keyframes load{from{width:0}to{width:100%}}
+.sub{font-family:'Segoe UI',sans-serif;font-size:11px;color:#8b949e;letter-spacing:.15em;text-transform:uppercase}
+</style></head>
+<body><div class="card">
+  <div class="logo">
+    <svg width="52" height="52" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M16 10 H48 Q54 10 54 16 V38 Q54 44 48 44 H28 L18 54 V44 H16 Q10 44 10 38 V16 Q10 10 16 10 Z" stroke="#00e5ff" stroke-width="3" stroke-linejoin="round"/>
+      <rect x="24" y="24" width="5" height="9" rx="2.5" fill="#00e5ff"/>
+      <rect x="35" y="24" width="5" height="9" rx="2.5" fill="#00e5ff"/>
+    </svg>
+    <div class="title">Re<span>spawn</span></div>
   </div>
-</body>
-</html>`)
+  <div class="bar"><div class="fill"></div></div>
+  <div class="sub">Find Your Squad</div>
+</div></body></html>`)
 }
 
 // ── MAIN WINDOW ──
@@ -88,32 +69,34 @@ function createWindow() {
   mainWindow.loadURL(RESPAWN_URL)
 
   mainWindow.webContents.on('did-finish-load', () => {
-    // Inject custom titlebar
+    // Inject custom titlebar CSS + HTML
     mainWindow.webContents.insertCSS(`
-      body { padding-top: 36px !important; }
-      .sidenav, #mob-tabbar { top: 36px !important; }
-      .page { top: 36px !important; }
-      #page-welcome, #page-auth { top: 36px !important; }
       #respawn-titlebar {
         position: fixed !important;
         top: 0 !important; left: 0 !important; right: 0 !important;
         height: 36px !important;
-        background: #0d1117 !important;
-        border-bottom: 1px solid #21262d !important;
+        background: var(--s900, #0d1117) !important;
+        border-bottom: 1px solid var(--s700, #21262d) !important;
         display: flex !important;
         align-items: center !important;
         justify-content: space-between !important;
-        padding: 0 12px 0 16px !important;
-        z-index: 99999 !important;
+        padding: 0 0 0 14px !important;
+        z-index: 999999 !important;
         -webkit-app-region: drag !important;
         user-select: none !important;
+        transition: transform 0.2s ease !important;
       }
-      .tb-logo { display: flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 700; color: #fff; letter-spacing: 0; }
+      #respawn-titlebar.hidden { transform: translateY(-36px) !important; }
+      body { padding-top: 36px !important; }
+      .sidenav { top: 36px !important; height: calc(100vh - 36px) !important; }
+      .main-area { top: 36px !important; }
+      #page-welcome, #page-auth { padding-top: 36px !important; }
+      .tb-logo { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: #fff; letter-spacing: 0; font-family: 'Rajdhani', 'Segoe UI', sans-serif; }
       .tb-logo span { color: #00e5ff; }
-      .tb-btns { display: flex; gap: 2px; -webkit-app-region: no-drag; }
-      .tb-btn { width: 28px; height: 22px; border: none; background: none; cursor: pointer; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #8b949e; font-size: 12px; transition: background 0.15s, color 0.15s; }
-      .tb-btn:hover { background: #21262d; color: #fff; }
-      .tb-btn.close:hover { background: #ff4d4d; color: #fff; }
+      .tb-btns { display: flex; -webkit-app-region: no-drag; height: 36px; }
+      .tb-btn { width: 46px; height: 36px; border: none; background: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #8b949e; font-size: 13px; transition: background 0.15s, color 0.15s; }
+      .tb-btn:hover { background: rgba(255,255,255,0.08); color: #fff; }
+      .tb-btn.close:hover { background: #e81123; color: #fff; }
     `)
     mainWindow.webContents.executeJavaScript(`
       if (!document.getElementById('respawn-titlebar')) {
@@ -121,28 +104,38 @@ function createWindow() {
         bar.id = 'respawn-titlebar';
         bar.innerHTML = \`
           <div class="tb-logo">
-            <svg width="14" height="14" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg width="16" height="16" viewBox="0 0 64 64" fill="none">
               <path d="M16 10 H48 Q54 10 54 16 V38 Q54 44 48 44 H28 L18 54 V44 H16 Q10 44 10 38 V16 Q10 10 16 10 Z" stroke="#00e5ff" stroke-width="3.5" stroke-linejoin="round"/>
             </svg>
-            Re<span style="color:#00e5ff">spawn</span>
+            Re<span>spawn</span>
           </div>
           <div class="tb-btns">
-            <button class="tb-btn" id="tb-min" title="Minimise">─</button>
-            <button class="tb-btn" id="tb-max" title="Maximise">□</button>
-            <button class="tb-btn close" id="tb-close" title="Close">✕</button>
+            <button class="tb-btn" id="tb-min">&#x2500;</button>
+            <button class="tb-btn" id="tb-max">&#x25A1;</button>
+            <button class="tb-btn close" id="tb-close">&#x2715;</button>
           </div>
         \`;
         document.body.insertBefore(bar, document.body.firstChild);
-        document.getElementById('tb-min').addEventListener('click', () => window.electronAPI?.minimize());
-        document.getElementById('tb-max').addEventListener('click', () => window.electronAPI?.maximize());
-        document.getElementById('tb-close').addEventListener('click', () => window.electronAPI?.close());
+        document.getElementById('tb-min').onclick = () => window.electronAPI?.minimize();
+        document.getElementById('tb-max').onclick = () => window.electronAPI?.maximize();
+        document.getElementById('tb-close').onclick = () => window.electronAPI?.close();
+
+        // Auto-hide titlebar in fullscreen
+        document.addEventListener('fullscreenchange', () => {
+          bar.classList.toggle('hidden', !!document.fullscreenElement);
+          document.body.style.paddingTop = document.fullscreenElement ? '0' : '36px';
+        });
       }
     `)
-    // Hide splash and show main window
+
+    // Show window, hide splash after 2.2s
     setTimeout(() => {
-      if (splashWindow && !splashWindow.isDestroyed()) splashWindow.close()
+      if (splashWindow && !splashWindow.isDestroyed()) {
+        splashWindow.close()
+        splashWindow = null
+      }
       mainWindow.show()
-    }, 2000)
+    }, 2200)
   })
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
@@ -152,6 +145,20 @@ function createWindow() {
 
   mainWindow.on('close', (e) => {
     if (!app.isQuiting) { e.preventDefault(); mainWindow.hide() }
+  })
+
+  // Hide titlebar when Electron goes fullscreen
+  mainWindow.on('enter-full-screen', () => {
+    mainWindow.webContents.executeJavaScript(`
+      const bar = document.getElementById('respawn-titlebar');
+      if(bar){bar.classList.add('hidden');document.body.style.paddingTop='0';}
+    `).catch(()=>{})
+  })
+  mainWindow.on('leave-full-screen', () => {
+    mainWindow.webContents.executeJavaScript(`
+      const bar = document.getElementById('respawn-titlebar');
+      if(bar){bar.classList.remove('hidden');document.body.style.paddingTop='36px';}
+    `).catch(()=>{})
   })
 }
 
@@ -174,7 +181,7 @@ function createTray() {
   })
 }
 
-// ── IPC — titlebar buttons ──
+// ── IPC ──
 ipcMain.on('minimize', () => mainWindow?.minimize())
 ipcMain.on('maximize', () => { if (mainWindow?.isMaximized()) mainWindow.unmaximize(); else mainWindow?.maximize() })
 ipcMain.on('close', () => mainWindow?.hide())
@@ -185,20 +192,22 @@ function setupAutoUpdater() {
   autoUpdater.autoDownload = true
   autoUpdater.autoInstallOnAppQuit = true
   autoUpdater.setFeedURL({ provider: 'github', owner: 'Respawnapp01', repo: 'Respawn-Desktop' })
-  autoUpdater.on('checking-for-update', () => console.log('Checking for updates...'))
+
+  autoUpdater.on('checking-for-update', () => {
+    mainWindow?.webContents.executeJavaScript(`if(typeof toast==='function')toast('Checking for updates...','info');`).catch(()=>{})
+  })
   autoUpdater.on('update-available', () => {
-    if (mainWindow) mainWindow.webContents.executeJavaScript(`if(typeof toast==='function')toast('Update found! Downloading... 🚀','info');`).catch(()=>{})
+    mainWindow?.webContents.executeJavaScript(`if(typeof toast==='function')toast('Update found! Downloading silently... 🚀','info');`).catch(()=>{})
   })
   autoUpdater.on('update-not-available', () => {
-    if (mainWindow) mainWindow.webContents.executeJavaScript(`if(typeof toast==='function')toast('Respawn is up to date ✅','success');`).catch(()=>{})
+    mainWindow?.webContents.executeJavaScript(`if(typeof toast==='function')toast('Respawn is up to date ✅','success');`).catch(()=>{})
   })
   autoUpdater.on('update-downloaded', () => {
-    if (mainWindow) {
-      mainWindow.webContents.executeJavaScript(`if(typeof toast==='function')toast('Update ready! Restart to install 🚀','success');`).catch(()=>{})
-    }
+    mainWindow?.webContents.executeJavaScript(`if(typeof toast==='function')toast('Update ready! Restart to install 🚀','success');`).catch(()=>{})
+    // Show Windows notification
     if (Notification.isSupported()) {
-      const n = new Notification({ title: 'Respawn Update Ready 🚀', body: 'Click to restart and install', icon: path.join(__dirname, 'icon.ico') })
-      n.on('click', () => autoUpdater.quitAndInstall(false, true))
+      const n = new Notification({ title: 'Respawn Update Ready 🚀', body: 'Restart to install the latest version', icon: path.join(__dirname, 'icon.ico') })
+      n.on('click', () => autoUpdater.quitAndInstall(true, true))
       n.show()
     }
   })
@@ -207,6 +216,7 @@ function setupAutoUpdater() {
   setInterval(() => autoUpdater.checkForUpdatesAndNotify(), 30 * 60 * 1000)
 }
 
+// ── APP INIT ──
 app.whenReady().then(() => {
   createSplash()
   createWindow()
