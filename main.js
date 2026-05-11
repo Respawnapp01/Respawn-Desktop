@@ -40,18 +40,12 @@ body{background:transparent;display:flex;align-items:center;justify-content:cent
 </div></body></html>`)
 }
 
-// ── MAIN WINDOW ──
+// ── MAIN WINDOW — simple frame, no custom titlebar ──
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1280, height: 820,
     minWidth: 800, minHeight: 600,
-    // Use titleBarOverlay — native Windows titlebar area, no CSS fighting
-    titleBarStyle: 'hidden',
-    titleBarOverlay: {
-      color: '#0d1117',
-      symbolColor: '#8b949e',
-      height: 36
-    },
+    autoHideMenuBar: true,
     backgroundColor: '#090b0f',
     icon: path.join(__dirname, 'icon.ico'),
     webPreferences: {
@@ -64,40 +58,11 @@ function createWindow() {
 
   mainWindow.loadURL(RESPAWN_URL)
 
-  // Inject minimal CSS to account for the 36px overlay area
   mainWindow.webContents.on('did-finish-load', () => {
-    mainWindow.webContents.insertCSS(`
-      body { padding-top: 36px !important; }
-      .sidenav { top: 36px !important; height: calc(100vh - 36px) !important; }
-      .main-area { top: 36px !important; }
-      .sidebar-panel { top: 36px !important; }
-      #page-welcome, #page-auth { padding-top: 36px !important; }
-    `)
-
     setTimeout(() => {
       if (splashWindow && !splashWindow.isDestroyed()) { splashWindow.close(); splashWindow = null }
       mainWindow.show()
     }, 2400)
-  })
-
-  // Remove extra padding in fullscreen
-  mainWindow.on('enter-full-screen', () => {
-    mainWindow.setTitleBarOverlay({ height: 0 })
-    mainWindow.webContents.insertCSS(`
-      body { padding-top: 0 !important; }
-      .sidenav { top: 0 !important; height: 100vh !important; }
-      .main-area { top: 0 !important; }
-      .sidebar-panel { top: 0 !important; }
-    `)
-  })
-  mainWindow.on('leave-full-screen', () => {
-    mainWindow.setTitleBarOverlay({ color: '#0d1117', symbolColor: '#8b949e', height: 36 })
-    mainWindow.webContents.insertCSS(`
-      body { padding-top: 36px !important; }
-      .sidenav { top: 36px !important; height: calc(100vh - 36px) !important; }
-      .main-area { top: 36px !important; }
-      .sidebar-panel { top: 36px !important; }
-    `)
   })
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
