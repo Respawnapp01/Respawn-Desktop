@@ -112,7 +112,7 @@ function createOverlay() {
     }
   })
   overlayWindow.loadFile(path.join(__dirname, 'overlay.html'))
-  overlayWindow.setIgnoreMouseEvents(false)
+  overlayWindow.setIgnoreMouseEvents(true, { forward: true })
   overlayWindow.on('closed', () => { overlayWindow = null })
 }
 
@@ -133,6 +133,9 @@ function createTray() {
 }
 
 // ── IPC ──
+ipcMain.on('overlay-set-clickthrough', (e, passThrough) => {
+  overlayWindow?.setIgnoreMouseEvents(passThrough, { forward: true })
+})
 ipcMain.on('minimize', () => mainWindow?.minimize())
 ipcMain.on('maximize', () => { if (mainWindow?.isMaximized()) mainWindow.unmaximize(); else mainWindow?.maximize() })
 ipcMain.on('close', () => mainWindow?.hide())

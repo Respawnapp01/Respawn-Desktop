@@ -11,6 +11,11 @@ body {
   width: 100vw; height: 100vh;
   position: fixed;
   inset: 0;
+  pointer-events: none;
+}
+/* Only these elements are interactive */
+#logo, #notif-stack, #ren-bubble, #ctx-menu {
+  pointer-events: all;
 }
 
 /* ── MAIN LOGO ── */
@@ -211,18 +216,12 @@ body {
   accent-color: #00e5ff;
 }
 
-/* ── DRAG HANDLE ── */
-#drag-handle {
-  position: fixed; inset: 0;
-  -webkit-app-region: no-drag;
-  pointer-events: none;
-  z-index: 1;
-}
+/* ── CLICK THROUGH ── */
+/* Body is click-through, only interactive elements catch events */
+
 </style>
 </head>
 <body>
-
-<div id="drag-handle"></div>
 
 <!-- Notification stack -->
 <div id="notif-stack"></div>
@@ -230,12 +229,7 @@ body {
 <!-- Floating logo -->
 <div id="logo">
   <div class="logo-bg" id="logo-bg">
-    <img src="./logo.png" style="width:32px;height:32px;object-fit:contain;border-radius:6px" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"/>
-    <svg width="28" height="28" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:none">
-      <path d="M16 10H48Q54 10 54 16V38Q54 44 48 44H28L18 54V44H16Q10 44 10 38V16Q10 10 16 10Z" stroke="#00e5ff" stroke-width="3.5" stroke-linejoin="round"/>
-      <rect x="24" y="24" width="5" height="9" rx="2.5" fill="#00e5ff"/>
-      <rect x="35" y="24" width="5" height="9" rx="2.5" fill="#00e5ff"/>
-    </svg>
+    <img id="logo-img" src="./logo.png" style="width:34px;height:34px;object-fit:contain;border-radius:8px"/>
     <div id="notif-count"></div>
     <div id="dnd-dot"></div>
   </div>
@@ -347,6 +341,17 @@ applyOpacity(opacity)
 document.getElementById('opacity-slider').value = opacity
 document.getElementById('opacity-slider').addEventListener('input', e => applyOpacity(parseInt(e.target.value)))
 
+// ── SMART CLICK-THROUGH ──
+// Pass mouse events to game unless hovering over interactive elements
+document.addEventListener('mousemove', (e) => {
+  const el = document.elementFromPoint(e.clientX, e.clientY)
+  const interactive = el && (
+    el.closest('#logo') || el.closest('#notif-stack') ||
+    el.closest('#ren-bubble') || el.closest('#ctx-menu')
+  )
+  window.overlayAPI?.send('overlay-set-clickthrough', !interactive)
+})
+
 // ── DRAG ──
 let dragging = false, dragOX = 0, dragOY = 0
 logo.addEventListener('mousedown', e => {
@@ -411,16 +416,15 @@ logo.addEventListener('mouseleave', () => {
   clearTimeout(renTimeout)
 })
 
-// ── CLICK — open app ──
+// ── DOUBLE CLICK only — open app ──
+let lastClick = 0
 logo.addEventListener('click', e => {
-  if (e.button === 0 && !dragging) {
+  if (dragging) return
+  const now = Date.now()
+  if (now - lastClick < 300) {
     ipcRenderer.send('overlay-open-app')
   }
-})
-
-// ── DOUBLE CLICK — open app focused ──
-logo.addEventListener('dblclick', () => {
-  ipcRenderer.send('overlay-open-app')
+  lastClick = now
 })
 
 // ── RIGHT CLICK — context menu ──
@@ -521,16 +525,16 @@ function addRenMsg(text, type) {
 
 // ── RECEIVE NOTIFICATIONS ──
 waitForAPI(() => {
-ipcRenderer.on('overlay-notify', (event, data) => {
+ipcRenderer.on('overlay-notify', (data) => {
   if (isDND) return
   addNotification(data)
   pulseLogo()
 })
 
-ipcRenderer.on('overlay-ren-reply', (event, reply) => {
+ipcRenderer.on('overlay-ren-reply', (reply) => {
   const msgs = document.getElementById('ren-msgs')
-  const typing = msgs.querySelector('.typing')
-  if (typing) typing.remove()
+  // Remove all typing indicators
+  msgs.querySelectorAll('.typing').forEach(t => t.remove())
   addRenMsg(reply, 'bot')
 })
 
