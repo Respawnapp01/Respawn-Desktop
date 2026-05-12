@@ -229,7 +229,7 @@ body {
 <!-- Floating logo -->
 <div id="logo">
   <div class="logo-bg" id="logo-bg">
-    <img id="logo-img" src="./logo.png" style="width:34px;height:34px;object-fit:contain;border-radius:8px"/>
+    <img id="logo-img" style="width:34px;height:34px;object-fit:contain;border-radius:8px"/>
     <div id="notif-count"></div>
     <div id="dnd-dot"></div>
   </div>
@@ -269,6 +269,26 @@ body {
   <div class="ctx-sep"></div>
   <div class="ctx-item" id="ctx-open">🎮 Open Respawn</div>
   <div class="ctx-item danger" id="ctx-hide">✕ Hide Overlay</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item" style="flex-direction:column;align-items:flex-start;gap:6px">
+    <span style="font-size:11px;color:#8b949e">Accent Color</span>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      <div class="accent-opt" data-color="#ffffff" style="width:18px;height:18px;border-radius:50%;background:#ffffff;cursor:pointer;border:2px solid #30363d"></div>
+      <div class="accent-opt" data-color="#00e5ff" style="width:18px;height:18px;border-radius:50%;background:#00e5ff;cursor:pointer;border:2px solid #30363d"></div>
+      <div class="accent-opt" data-color="#a855f7" style="width:18px;height:18px;border-radius:50%;background:#a855f7;cursor:pointer;border:2px solid #30363d"></div>
+      <div class="accent-opt" data-color="#3fb950" style="width:18px;height:18px;border-radius:50%;background:#3fb950;cursor:pointer;border:2px solid #30363d"></div>
+      <div class="accent-opt" data-color="#ff4d4d" style="width:18px;height:18px;border-radius:50%;background:#ff4d4d;cursor:pointer;border:2px solid #30363d"></div>
+      <div class="accent-opt" data-color="#f59e0b" style="width:18px;height:18px;border-radius:50%;background:#f59e0b;cursor:pointer;border:2px solid #30363d"></div>
+    </div>
+  </div>
+  <div class="ctx-item" style="flex-direction:column;align-items:flex-start;gap:4px">
+    <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
+      <span style="font-size:11px;color:#8b949e">Glow</span>
+      <label style="display:flex;align-items:center;gap:4px;cursor:pointer">
+        <input type="checkbox" id="glow-toggle" style="accent-color:#00e5ff"/>
+      </label>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -299,6 +319,21 @@ const renBubble = document.getElementById('ren-bubble')
 const ctxMenu = document.getElementById('ctx-menu')
 const notifCountEl = document.getElementById('notif-count')
 const dndDot = document.getElementById('dnd-dot')
+
+// ── LOAD LOGO ──
+const logoImg = document.getElementById('logo-img')
+if (logoImg) {
+  // Try different paths for Electron packaged vs dev
+  const paths = ['./logo.png', '../logo.png']
+  let loaded = false
+  paths.forEach(p => {
+    if (!loaded) {
+      const img = new Image()
+      img.onload = () => { if (!loaded) { loaded = true; logoImg.src = p } }
+      img.src = p
+    }
+  })
+}
 
 // ── INIT POSITION ──
 function applyPosition() {
@@ -469,7 +504,7 @@ function showCtxMenu(x, y) {
 }
 function hideCtxMenu() { ctxMenu.style.display = 'none' }
 document.addEventListener('click', e => {
-  if (!ctxMenu.contains(e.target)) hideCtxMenu()
+  if (!ctxMenu.contains(e.target) && !logo.contains(e.target)) hideCtxMenu()
 })
 
 // ── REN ──
@@ -527,6 +562,7 @@ function addRenMsg(text, type) {
 waitForAPI(() => {
 ipcRenderer.on('overlay-notify', (data) => {
   if (isDND) return
+  slideInForNotif() // Slide back from edge when notification arrives
   addNotification(data)
   pulseLogo()
 })
@@ -582,6 +618,7 @@ function addNotification(data) {
       <div class="notif-time">${timeAgo()}</div>
       <button class="notif-close" onclick="dismissNotif(this)">✕</button>
     </div>
+    ${data.gifUrl ? `<div style="margin-bottom:6px"><img src="${data.gifUrl}" style="width:100%;border-radius:6px;max-height:80px;object-fit:cover"/></div>` : ''}
     <div class="notif-msg">${escHTML(data.message || '')}</div>
     ${actionHTML}
   `
@@ -611,12 +648,12 @@ function dismissCard(card) {
   setTimeout(() => { if (card.parentNode) card.parentNode.removeChild(card) }, 250)
 }
 
-function dismissNotif(btn) {
+window.dismissNotif = function(btn) {
   const card = btn.closest('.notif-card')
-  dismissCard(card)
+  if (card) dismissCard(card)
 }
 
-function acceptFriend(uid, btn) {
+window.acceptFriend = function(uid, btn) {
   ipcRenderer.send('overlay-accept-friend', uid)
   const card = btn.closest('.notif-card')
   const btns = card.querySelector('.notif-btns')
@@ -624,7 +661,7 @@ function acceptFriend(uid, btn) {
   setTimeout(() => dismissCard(card), 2000)
 }
 
-function sendReply(btn) {
+window.sendReply = function(btn) {
   const inp = btn.previousElementSibling
   const msg = inp.value.trim()
   if (!msg) return
@@ -643,9 +680,46 @@ function timeAgo() { return 'just now' }
 
 }) // end waitForAPI
 
+// ── ACCENT COLOR ──
+let overlayAccent = localStorage.getItem('overlay-accent') || '#ffffff'
+let overlayGlow = localStorage.getItem('overlay-glow') === 'true'
+
+function applyOverlayAccent() {
+  const logoBg = document.getElementById('logo-bg')
+  if (logoBg) {
+    logoBg.style.borderColor = overlayAccent
+    logoBg.style.boxShadow = overlayGlow
+      ? `0 4px 20px ${overlayAccent}66, 0 2px 8px rgba(0,0,0,0.8)`
+      : '0 2px 8px rgba(0,0,0,0.8)'
+  }
+  const renBubble = document.getElementById('ren-bubble')
+  if (renBubble) renBubble.style.borderColor = overlayAccent
+}
+applyOverlayAccent()
+
+document.querySelectorAll('.accent-opt').forEach(opt => {
+  opt.addEventListener('click', () => {
+    overlayAccent = opt.dataset.color
+    localStorage.setItem('overlay-accent', overlayAccent)
+    applyOverlayAccent()
+    document.querySelectorAll('.accent-opt').forEach(o => o.style.borderColor = '#30363d')
+    opt.style.borderColor = '#fff'
+  })
+  if (opt.dataset.color === overlayAccent) opt.style.borderColor = '#fff'
+})
+
+document.getElementById('glow-toggle').checked = overlayGlow
+document.getElementById('glow-toggle').addEventListener('change', e => {
+  overlayGlow = e.target.checked
+  localStorage.setItem('overlay-glow', overlayGlow)
+  applyOverlayAccent()
+})
+
 // ── FULLSCREEN DETECTION ──
-// When window loses focus (game went fullscreen), slide logo to edge
-window.addEventListener('blur', () => {
+let isEdged = false
+let edgePos = null
+
+function slideToEdge() {
   const r = logo.getBoundingClientRect()
   const sz = sizes[size]
   const distRight = window.innerWidth - r.right
@@ -653,18 +727,69 @@ window.addEventListener('blur', () => {
   const distBottom = window.innerHeight - r.bottom
   const distTop = r.top
   const minDist = Math.min(distRight, distLeft, distBottom, distTop)
+
   logo.style.transition = 'all 0.4s ease'
-  if (minDist === distRight) logo.style.left = (window.innerWidth - 6) + 'px'
-  else if (minDist === distLeft) logo.style.left = (6 - sz) + 'px'
-  else if (minDist === distBottom) logo.style.top = (window.innerHeight - 6) + 'px'
-  else logo.style.top = (6 - sz) + 'px'
+  isEdged = true
+
+  // Slide to nearest edge — keep 8px peeking out so user can hover to bring back
+  if (minDist === distRight) {
+    edgePos = { side: 'right', x: window.innerWidth - 8, y: parseFloat(logo.style.top) || r.top }
+    logo.style.left = (window.innerWidth - 8) + 'px'
+    logo.style.top = edgePos.y + 'px'
+  } else if (minDist === distLeft) {
+    edgePos = { side: 'left', x: 8 - sz, y: parseFloat(logo.style.top) || r.top }
+    logo.style.left = (8 - sz) + 'px'
+    logo.style.top = edgePos.y + 'px'
+  } else if (minDist === distBottom) {
+    edgePos = { side: 'bottom', x: parseFloat(logo.style.left) || r.left, y: window.innerHeight - 8 }
+    logo.style.top = (window.innerHeight - 8) + 'px'
+    logo.style.left = edgePos.x + 'px'
+  } else {
+    edgePos = { side: 'top', x: parseFloat(logo.style.left) || r.left, y: 8 - sz }
+    logo.style.top = (8 - sz) + 'px'
+    logo.style.left = edgePos.x + 'px'
+  }
   logo.style.right = 'auto'
   logo.style.bottom = 'auto'
+
+  // Keep logo interactive even at edge
+  logo.style.pointerEvents = 'all'
+}
+
+function slideBack() {
+  if (!isEdged) return
+  isEdged = false
+  logo.style.transition = 'all 0.3s cubic-bezier(.175,.885,.32,1.275)'
+  applyPosition()
+}
+
+// When notification arrives while edged — slide back in temporarily
+function slideInForNotif() {
+  if (!isEdged) return
+  slideBack()
+  // Slide back to edge after 6 seconds if still no interaction
+  setTimeout(() => {
+    if (!renVisible && notifStack.children.length === 0) slideToEdge()
+  }, 6500)
+}
+
+// Override addNotification to slide back when notif arrives
+const _origAddNotification = addNotification
+// Patch after definition
+
+// When window loses focus (game went fullscreen)
+window.addEventListener('blur', () => {
+  setTimeout(slideToEdge, 500) // small delay so accidental blur doesn't trigger
 })
 
-// When app regains focus, slide back
+// When overlay regains focus, slide back
 window.addEventListener('focus', () => {
-  applyPosition()
+  slideBack()
+})
+
+// Hover at edge to pull back
+logo.addEventListener('mouseenter', () => {
+  if (isEdged) slideBack()
 })
 </script>
 </body>
