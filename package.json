@@ -1,6 +1,6 @@
 {
   "name": "respawn",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "The social app for gamers",
   "main": "main.js",
   "scripts": {
@@ -11,7 +11,14 @@
     "appId": "uk.respawnapp.respawn",
     "productName": "Respawn",
     "artifactName": "Respawn-Setup.exe",
-    "files": ["main.js", "preload.js", "icon.ico", "package.json"],
+    "files": [
+      "main.js",
+      "preload.js",
+      "overlay.html",
+      "overlay-preload.js",
+      "icon.ico",
+      "package.json"
+    ],
     "publish": {
       "provider": "github",
       "owner": "Respawnapp01",

@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8"/>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body {
+  background: transparent;
+  overflow: hidden;
+  font-family: 'Segoe UI', sans-serif;
+  width: 100vw; height: 100vh;
+}
+
+/* ── MAIN LOGO ── */
+#logo {
+  position: fixed;
+  bottom: 20px; right: 20px;
+  width: 52px; height: 52px;
+  cursor: pointer;
+  transition: transform 0.3s cubic-bezier(.175,.885,.32,1.275), opacity 0.3s;
+  -webkit-app-region: no-drag;
+  z-index: 100;
+}
+#logo.hidden { transform: translateX(70px); }
+#logo.dnd .logo-bg { opacity: 0.4; filter: grayscale(1); }
+#logo:hover { transform: scale(1.1); }
+#logo.hidden:hover { transform: translateX(70px) scale(1.1); }
+
+.logo-bg {
+  width: 52px; height: 52px;
+  background: #0d1117;
+  border: 2px solid #00e5ff;
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 20px rgba(0,229,255,0.3), 0 2px 8px rgba(0,0,0,0.8);
+  transition: box-shadow 0.2s, border-color 0.2s;
+  position: relative;
+}
+.logo-bg:hover { box-shadow: 0 4px 30px rgba(0,229,255,0.5), 0 2px 8px rgba(0,0,0,0.8); }
+.logo-bg.pulse { animation: pulse 0.6s ease 3; }
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 4px 20px rgba(0,229,255,0.3); }
+  50% { box-shadow: 0 4px 40px rgba(0,229,255,0.9), 0 0 20px rgba(0,229,255,0.5); }
+}
+
+/* Notification badge */
+#notif-count {
+  position: absolute; top: -6px; right: -6px;
+  background: #ff4d4d; color: #fff;
+  font-size: 10px; font-weight: 700;
+  width: 18px; height: 18px; border-radius: 50%;
+  display: none; align-items: center; justify-content: center;
+  border: 2px solid #0d1117;
+}
+
+/* DND indicator */
+#dnd-dot {
+  position: absolute; bottom: -4px; right: -4px;
+  width: 12px; height: 12px; border-radius: 50%;
+  background: #ff4d4d; border: 2px solid #0d1117;
+  display: none;
+}
+
+/* ── NOTIFICATIONS STACK ── */
+#notif-stack {
+  position: fixed;
+  bottom: 82px; right: 20px;
+  width: 300px;
+  display: flex; flex-direction: column-reverse; gap: 8px;
+  z-index: 99;
+}
+
+.notif-card {
+  background: #0d1117;
+  border: 1px solid #21262d;
+  border-left: 3px solid #00e5ff;
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.8);
+  animation: slideIn 0.3s cubic-bezier(.175,.885,.32,1.275);
+  cursor: pointer;
+}
+.notif-card.friend { border-left-color: #a855f7; }
+.notif-card.ren { border-left-color: #00e5ff; }
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideOut {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(30px); }
+}
+.notif-card.removing { animation: slideOut 0.25s ease forwards; }
+
+.notif-hdr { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.notif-av {
+  width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: #fff; flex-shrink: 0;
+  background: #378ADD;
+  overflow: hidden;
+}
+.notif-av img { width: 100%; height: 100%; object-fit: cover; }
+.notif-name { font-size: 12px; font-weight: 700; color: #fff; flex: 1; }
+.notif-time { font-size: 10px; color: #8b949e; }
+.notif-close {
+  width: 18px; height: 18px; border-radius: 50%;
+  background: rgba(255,255,255,0.08); border: none; cursor: pointer;
+  color: #8b949e; font-size: 11px; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.notif-close:hover { background: rgba(255,255,255,0.15); color: #fff; }
+.notif-msg { font-size: 12px; color: #8b949e; margin-bottom: 8px; line-height: 1.4; word-break: break-word; }
+
+/* Quick reply */
+.notif-reply { display: flex; gap: 6px; margin-top: 6px; }
+.notif-inp {
+  flex: 1; background: #161b22; border: 1px solid #30363d;
+  border-radius: 6px; padding: 5px 8px; font-size: 11px; color: #c9d1d9;
+  outline: none; font-family: 'Segoe UI', sans-serif;
+}
+.notif-inp:focus { border-color: #00e5ff; }
+.notif-send {
+  background: #00e5ff; border: none; border-radius: 6px;
+  padding: 5px 10px; font-size: 11px; font-weight: 700;
+  color: #0d1117; cursor: pointer;
+}
+.notif-send:hover { background: #00ccee; }
+
+/* Friend request buttons */
+.notif-btns { display: flex; gap: 6px; margin-top: 6px; }
+.notif-btn {
+  flex: 1; border: none; border-radius: 6px; padding: 6px;
+  font-size: 11px; font-weight: 700; cursor: pointer;
+  font-family: 'Segoe UI', sans-serif;
+}
+.notif-btn.accept { background: rgba(63,185,80,0.15); color: #3fb950; border: 1px solid #3fb950; }
+.notif-btn.accept:hover { background: rgba(63,185,80,0.25); }
+.notif-btn.decline { background: rgba(255,77,77,0.1); color: #ff4d4d; border: 1px solid rgba(255,77,77,0.3); }
+.notif-btn.decline:hover { background: rgba(255,77,77,0.2); }
+
+/* ── REN CHAT BUBBLE ── */
+#ren-bubble {
+  position: fixed;
+  bottom: 20px; right: 82px;
+  width: 260px;
+  background: #0d1117; border: 1px solid #00e5ff;
+  border-radius: 16px; padding: 12px;
+  box-shadow: 0 4px 24px rgba(0,229,255,0.2), 0 2px 8px rgba(0,0,0,0.8);
+  display: none;
+  animation: fadeIn 0.2s ease;
+  z-index: 101;
+}
+@keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+#ren-title {
+  font-size: 12px; font-weight: 700; color: #00e5ff;
+  margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
+}
+#ren-msgs {
+  max-height: 160px; overflow-y: auto; margin-bottom: 8px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+#ren-msgs::-webkit-scrollbar { width: 3px; }
+#ren-msgs::-webkit-scrollbar-track { background: transparent; }
+#ren-msgs::-webkit-scrollbar-thumb { background: #30363d; border-radius: 2px; }
+.ren-msg {
+  font-size: 11px; line-height: 1.4; padding: 6px 8px; border-radius: 8px; max-width: 90%;
+}
+.ren-msg.user { background: rgba(0,229,255,0.12); color: #c9d1d9; align-self: flex-end; }
+.ren-msg.bot { background: #161b22; color: #c9d1d9; align-self: flex-start; }
+.ren-msg.typing { color: #8b949e; font-style: italic; }
+#ren-inp-row { display: flex; gap: 6px; }
+#ren-inp {
+  flex: 1; background: #161b22; border: 1px solid #30363d;
+  border-radius: 8px; padding: 6px 10px; font-size: 11px;
+  color: #c9d1d9; outline: none; font-family: 'Segoe UI', sans-serif;
+}
+#ren-inp:focus { border-color: #00e5ff; }
+#ren-send {
+  background: #00e5ff; border: none; border-radius: 8px;
+  padding: 6px 10px; font-size: 11px; font-weight: 700;
+  color: #0d1117; cursor: pointer;
+}
+
+/* ── CONTEXT MENU ── */
+#ctx-menu {
+  position: fixed; z-index: 9999;
+  background: #0d1117; border: 1px solid #30363d;
+  border-radius: 10px; padding: 4px; min-width: 170px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.8);
+  display: none;
+}
+.ctx-item {
+  padding: 8px 12px; border-radius: 6px; cursor: pointer;
+  font-size: 12px; color: #c9d1d9; display: flex; align-items: center; gap: 8px;
+  transition: background 0.1s;
+}
+.ctx-item:hover { background: rgba(255,255,255,0.07); }
+.ctx-item.danger { color: #ff4d4d; }
+.ctx-sep { height: 1px; background: #21262d; margin: 3px 0; }
+
+/* Opacity slider */
+#opacity-slider {
+  width: 100%; margin-top: 4px;
+  accent-color: #00e5ff;
+}
+
+/* ── DRAG HANDLE ── */
+#drag-handle {
+  position: fixed; inset: 0;
+  -webkit-app-region: no-drag;
+  pointer-events: none;
+  z-index: 1;
+}
+</style>
+</head>
+<body>
+
+<div id="drag-handle"></div>
+
+<!-- Notification stack -->
+<div id="notif-stack"></div>
+
+<!-- Floating logo -->
+<div id="logo">
+  <div class="logo-bg" id="logo-bg">
+    <svg width="28" height="28" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M16 10H48Q54 10 54 16V38Q54 44 48 44H28L18 54V44H16Q10 44 10 38V16Q10 10 16 10Z" stroke="#00e5ff" stroke-width="3.5" stroke-linejoin="round"/>
+      <rect x="24" y="24" width="5" height="9" rx="2.5" fill="#00e5ff"/>
+      <rect x="35" y="24" width="5" height="9" rx="2.5" fill="#00e5ff"/>
+    </svg>
+    <div id="notif-count"></div>
+    <div id="dnd-dot"></div>
+  </div>
+</div>
+
+<!-- Ren chat bubble -->
+<div id="ren-bubble">
+  <div id="ren-title">
+    <svg width="14" height="14" viewBox="0 0 64 64" fill="none">
+      <path d="M16 10H48Q54 10 54 16V38Q54 44 48 44H28L18 54V44H16Q10 44 10 38V16Q10 10 16 10Z" stroke="#00e5ff" stroke-width="3.5" stroke-linejoin="round"/>
+      <rect x="24" y="24" width="5" height="9" rx="2.5" fill="#00e5ff"/>
+      <rect x="35" y="24" width="5" height="9" rx="2.5" fill="#00e5ff"/>
+    </svg>
+    Ren — Ask anything
+  </div>
+  <div id="ren-msgs">
+    <div class="ren-msg bot">Hey! Ask me anything gaming 🎮</div>
+  </div>
+  <div id="ren-inp-row">
+    <input id="ren-inp" placeholder="Ask Ren..." />
+    <button id="ren-send">→</button>
+  </div>
+</div>
+
+<!-- Context menu -->
+<div id="ctx-menu">
+  <div class="ctx-item" id="ctx-dnd">🔕 Do Not Disturb</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item" id="ctx-small">⬡ Small</div>
+  <div class="ctx-item" id="ctx-medium">⬡ Medium</div>
+  <div class="ctx-item" id="ctx-large">⬡ Large</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item">
+    <span>Opacity</span>
+    <input type="range" id="opacity-slider" min="30" max="100" value="100"/>
+  </div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item" id="ctx-open">🎮 Open Respawn</div>
+  <div class="ctx-item danger" id="ctx-hide">✕ Hide Overlay</div>
+</div>
+
+<script>
+// Wait for overlayAPI to be ready
+function waitForAPI(cb) {
+  if (window.overlayAPI) { cb(); return; }
+  setTimeout(() => waitForAPI(cb), 50);
+}
+const ipcRenderer = {
+  send: (ch, d) => window.overlayAPI?.send(ch, d),
+  on: (ch, cb) => window.overlayAPI?.on(ch, cb)
+}
+
+// ── STATE ──
+let isDND = false
+let isHidden = false
+let notifCount = 0
+let renVisible = false
+let pos = JSON.parse(localStorage.getItem('overlay-pos') || '{"x":-1,"y":-1}')
+let size = localStorage.getItem('overlay-size') || 'medium'
+let opacity = parseInt(localStorage.getItem('overlay-opacity') || '100')
+let notifications = []
+
+const logo = document.getElementById('logo')
+const logoBg = document.getElementById('logo-bg')
+const notifStack = document.getElementById('notif-stack')
+const renBubble = document.getElementById('ren-bubble')
+const ctxMenu = document.getElementById('ctx-menu')
+const notifCountEl = document.getElementById('notif-count')
+const dndDot = document.getElementById('dnd-dot')
+
+// ── INIT POSITION ──
+function applyPosition() {
+  const s = window.screen
+  if (pos.x === -1) {
+    logo.style.right = '20px'
+    logo.style.bottom = '20px'
+    logo.style.left = 'auto'
+    logo.style.top = 'auto'
+  } else {
+    logo.style.left = pos.x + 'px'
+    logo.style.top = pos.y + 'px'
+    logo.style.right = 'auto'
+    logo.style.bottom = 'auto'
+  }
+}
+applyPosition()
+
+// ── SIZE ──
+const sizes = { small: 40, medium: 52, large: 68 }
+function applySize(s) {
+  size = s
+  localStorage.setItem('overlay-size', s)
+  const sz = sizes[s]
+  logo.style.width = sz + 'px'
+  logo.style.height = sz + 'px'
+  logoBg.style.width = sz + 'px'
+  logoBg.style.height = sz + 'px'
+  logoBg.style.borderRadius = (sz * 0.27) + 'px'
+}
+applySize(size)
+
+// ── OPACITY ──
+function applyOpacity(v) {
+  opacity = v
+  localStorage.setItem('overlay-opacity', v)
+  logo.style.opacity = v / 100
+}
+applyOpacity(opacity)
+document.getElementById('opacity-slider').value = opacity
+document.getElementById('opacity-slider').addEventListener('input', e => applyOpacity(parseInt(e.target.value)))
+
+// ── DRAG ──
+let dragging = false, dragOX = 0, dragOY = 0
+logo.addEventListener('mousedown', e => {
+  if (e.button !== 0) return
+  dragging = true
+  const r = logo.getBoundingClientRect()
+  dragOX = e.clientX - r.left
+  dragOY = e.clientY - r.top
+  logo.style.transition = 'none'
+  document.addEventListener('mousemove', onDrag)
+  document.addEventListener('mouseup', onDragEnd)
+})
+function onDrag(e) {
+  if (!dragging) return
+  const x = e.clientX - dragOX
+  const y = e.clientY - dragOY
+  logo.style.left = x + 'px'
+  logo.style.top = y + 'px'
+  logo.style.right = 'auto'
+  logo.style.bottom = 'auto'
+}
+function onDragEnd(e) {
+  dragging = false
+  logo.style.transition = ''
+  const r = logo.getBoundingClientRect()
+  pos = { x: r.left, y: r.top }
+  localStorage.setItem('overlay-pos', JSON.stringify(pos))
+  document.removeEventListener('mousemove', onDrag)
+  document.removeEventListener('mouseup', onDragEnd)
+
+  // Check if slid off screen edge — snap back
+  const sw = window.innerWidth, sh = window.innerHeight
+  const sz = sizes[size]
+  const peekX = Math.max(-sz + 8, Math.min(sw - 8, pos.x))
+  const peekY = Math.max(0, Math.min(sh - sz, pos.y))
+  if (peekX !== pos.x || peekY !== pos.y) {
+    // User slid it to edge — keep peeking
+    logo.style.left = peekX + 'px'
+    logo.style.top = peekY + 'px'
+    pos = { x: peekX, y: peekY }
+    localStorage.setItem('overlay-pos', JSON.stringify(pos))
+  }
+}
+
+// ── HOVER — pull back from edge + show Ren ──
+logo.addEventListener('mouseenter', () => {
+  if (!dragging) {
+    const r = logo.getBoundingClientRect()
+    const sz = sizes[size]
+    const snapX = Math.max(8, Math.min(window.innerWidth - sz - 8, r.left))
+    const snapY = Math.max(8, Math.min(window.innerHeight - sz - 8, r.top))
+    if (Math.abs(r.left - snapX) > 4 || Math.abs(r.top - snapY) > 4) {
+      logo.style.left = snapX + 'px'
+      logo.style.top = snapY + 'px'
+    }
+    // Show Ren bubble hint after 800ms hover
+    renTimeout = setTimeout(() => { if (!renVisible) showRen() }, 800)
+  }
+})
+let renTimeout = null
+logo.addEventListener('mouseleave', () => {
+  clearTimeout(renTimeout)
+})
+
+// ── CLICK — open app ──
+logo.addEventListener('click', e => {
+  if (e.button === 0 && !dragging) {
+    ipcRenderer.send('overlay-open-app')
+  }
+})
+
+// ── DOUBLE CLICK — open app focused ──
+logo.addEventListener('dblclick', () => {
+  ipcRenderer.send('overlay-open-app')
+})
+
+// ── RIGHT CLICK — context menu ──
+logo.addEventListener('contextmenu', e => {
+  e.preventDefault()
+  showCtxMenu(e.clientX, e.clientY)
+})
+
+// ── DND ──
+document.getElementById('ctx-dnd').addEventListener('click', () => {
+  isDND = !isDND
+  logo.classList.toggle('dnd', isDND)
+  dndDot.style.display = isDND ? 'flex' : 'none'
+  document.getElementById('ctx-dnd').textContent = isDND ? '🔔 Enable Notifications' : '🔕 Do Not Disturb'
+  hideCtxMenu()
+  ipcRenderer.send('overlay-dnd', isDND)
+})
+
+// ── SIZE BUTTONS ──
+document.getElementById('ctx-small').addEventListener('click', () => { applySize('small'); hideCtxMenu() })
+document.getElementById('ctx-medium').addEventListener('click', () => { applySize('medium'); hideCtxMenu() })
+document.getElementById('ctx-large').addEventListener('click', () => { applySize('large'); hideCtxMenu() })
+
+// ── OPEN APP ──
+document.getElementById('ctx-open').addEventListener('click', () => {
+  ipcRenderer.send('overlay-open-app')
+  hideCtxMenu()
+})
+
+// ── HIDE OVERLAY ──
+document.getElementById('ctx-hide').addEventListener('click', () => {
+  ipcRenderer.send('overlay-hide')
+  hideCtxMenu()
+})
+
+// ── CONTEXT MENU ──
+function showCtxMenu(x, y) {
+  ctxMenu.style.display = 'block'
+  const menuW = 180, menuH = 220
+  ctxMenu.style.left = Math.min(x, window.innerWidth - menuW) + 'px'
+  ctxMenu.style.top = Math.min(y, window.innerHeight - menuH) + 'px'
+}
+function hideCtxMenu() { ctxMenu.style.display = 'none' }
+document.addEventListener('click', e => {
+  if (!ctxMenu.contains(e.target)) hideCtxMenu()
+})
+
+// ── REN ──
+function showRen() {
+  renVisible = true
+  renBubble.style.display = 'block'
+  const r = logo.getBoundingClientRect()
+  const sz = sizes[size]
+  renBubble.style.left = Math.max(8, r.left - 270) + 'px'
+  renBubble.style.top = (r.top + sz / 2 - 110) + 'px'
+  renBubble.style.bottom = 'auto'
+  renBubble.style.right = 'auto'
+  document.getElementById('ren-inp').focus()
+}
+function hideRen() {
+  renVisible = false
+  renBubble.style.display = 'none'
+}
+document.addEventListener('click', e => {
+  if (!renBubble.contains(e.target) && !logo.contains(e.target)) hideRen()
+})
+document.addEventListener('keydown', e => { if (e.key === 'Escape') hideRen() })
+
+// Send Ren message
+async function sendRenMsg() {
+  const inp = document.getElementById('ren-inp')
+  const msg = inp.value.trim()
+  if (!msg) return
+  inp.value = ''
+  addRenMsg(msg, 'user')
+  const typing = addRenMsg('Ren is thinking...', 'bot typing')
+  try {
+    ipcRenderer.send('overlay-ren-ask', msg)
+  } catch(e) {
+    typing.remove()
+    addRenMsg('Sorry, Ren is unavailable right now.', 'bot')
+  }
+}
+document.getElementById('ren-send').addEventListener('click', sendRenMsg)
+document.getElementById('ren-inp').addEventListener('keydown', e => {
+  if (e.key === 'Enter') sendRenMsg()
+})
+
+function addRenMsg(text, type) {
+  const msgs = document.getElementById('ren-msgs')
+  const d = document.createElement('div')
+  d.className = 'ren-msg ' + type
+  d.textContent = text
+  msgs.appendChild(d)
+  msgs.scrollTop = msgs.scrollHeight
+  return d
+}
+
+// ── RECEIVE NOTIFICATIONS ──
+waitForAPI(() => {
+ipcRenderer.on('overlay-notify', (event, data) => {
+  if (isDND) return
+  addNotification(data)
+  pulseLogo()
+})
+
+ipcRenderer.on('overlay-ren-reply', (event, reply) => {
+  const msgs = document.getElementById('ren-msgs')
+  const typing = msgs.querySelector('.typing')
+  if (typing) typing.remove()
+  addRenMsg(reply, 'bot')
+})
+
+function pulseLogo() {
+  logoBg.classList.remove('pulse')
+  void logoBg.offsetWidth
+  logoBg.classList.add('pulse')
+  setTimeout(() => logoBg.classList.remove('pulse'), 2000)
+  notifCount++
+  notifCountEl.style.display = 'flex'
+  notifCountEl.textContent = notifCount > 9 ? '9+' : notifCount
+}
+
+function clearNotifCount() {
+  notifCount = 0
+  notifCountEl.style.display = 'none'
+}
+
+function addNotification(data) {
+  const card = document.createElement('div')
+  card.className = 'notif-card' + (data.type === 'friend' ? ' friend' : data.type === 'ren' ? ' ren' : '')
+
+  // Avatar
+  const avHTML = data.avatar
+    ? `<img src="${data.avatar}"/>`
+    : `<span>${(data.name || '?')[0].toUpperCase()}</span>`
+
+  let actionHTML = ''
+  if (data.type === 'friend') {
+    actionHTML = `<div class="notif-btns">
+      <button class="notif-btn accept" onclick="acceptFriend('${data.uid}', this)">✓ Accept</button>
+      <button class="notif-btn decline" onclick="dismissNotif(this)">✕ Decline</button>
+    </div>`
+  } else if (data.type === 'message' || data.type === 'dm') {
+    actionHTML = `<div class="notif-reply">
+      <input class="notif-inp" placeholder="Reply..." data-uid="${data.uid}" data-context="${data.context || ''}"/>
+      <button class="notif-send" onclick="sendReply(this)">→</button>
+    </div>`
+  }
+
+  card.innerHTML = `
+    <div class="notif-hdr">
+      <div class="notif-av" style="background:${data.color || '#378ADD'}">${avHTML}</div>
+      <div class="notif-name">${escHTML(data.name || 'Unknown')}</div>
+      <div class="notif-time">${timeAgo()}</div>
+      <button class="notif-close" onclick="dismissNotif(this)">✕</button>
+    </div>
+    <div class="notif-msg">${escHTML(data.message || '')}</div>
+    ${actionHTML}
+  `
+  card.addEventListener('click', e => {
+    if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT') return
+    ipcRenderer.send('overlay-open-app', data)
+    dismissCard(card)
+  })
+  notifStack.appendChild(card)
+
+  // Auto-dismiss after 6 seconds
+  const timer = setTimeout(() => dismissCard(card), 6000)
+  card._timer = timer
+
+  // Max 4 notifications shown
+  while (notifStack.children.length > 4) {
+    const old = notifStack.firstChild
+    if (old._timer) clearTimeout(old._timer)
+    notifStack.removeChild(old)
+  }
+}
+
+function dismissCard(card) {
+  if (!card || !card.parentNode) return
+  if (card._timer) clearTimeout(card._timer)
+  card.classList.add('removing')
+  setTimeout(() => { if (card.parentNode) card.parentNode.removeChild(card) }, 250)
+}
+
+function dismissNotif(btn) {
+  const card = btn.closest('.notif-card')
+  dismissCard(card)
+}
+
+function acceptFriend(uid, btn) {
+  ipcRenderer.send('overlay-accept-friend', uid)
+  const card = btn.closest('.notif-card')
+  const btns = card.querySelector('.notif-btns')
+  if (btns) btns.innerHTML = '<div style="font-size:11px;color:#3fb950">✓ Friend request accepted!</div>'
+  setTimeout(() => dismissCard(card), 2000)
+}
+
+function sendReply(btn) {
+  const inp = btn.previousElementSibling
+  const msg = inp.value.trim()
+  if (!msg) return
+  ipcRenderer.send('overlay-reply', { uid: inp.dataset.uid, context: inp.dataset.context, message: msg })
+  inp.value = ''
+  const card = btn.closest('.notif-card')
+  const reply = card.querySelector('.notif-reply')
+  if (reply) reply.innerHTML = '<div style="font-size:11px;color:#00e5ff">✓ Sent!</div>'
+  setTimeout(() => dismissCard(card), 1500)
+}
+
+function escHTML(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+}
+function timeAgo() { return 'just now' }
+
+}) // end waitForAPI
+
+// ── FULLSCREEN DETECTION ──
+// When window loses focus (game went fullscreen), slide logo to edge
+window.addEventListener('blur', () => {
+  const r = logo.getBoundingClientRect()
+  const sz = sizes[size]
+  const distRight = window.innerWidth - r.right
+  const distLeft = r.left
+  const distBottom = window.innerHeight - r.bottom
+  const distTop = r.top
+  const minDist = Math.min(distRight, distLeft, distBottom, distTop)
+  logo.style.transition = 'all 0.4s ease'
+  if (minDist === distRight) logo.style.left = (window.innerWidth - 6) + 'px'
+  else if (minDist === distLeft) logo.style.left = (6 - sz) + 'px'
+  else if (minDist === distBottom) logo.style.top = (window.innerHeight - 6) + 'px'
+  else logo.style.top = (6 - sz) + 'px'
+  logo.style.right = 'auto'
+  logo.style.bottom = 'auto'
+})
+
+// When app regains focus, slide back
+window.addEventListener('focus', () => {
+  applyPosition()
+})
+</script>
+</body>
+</html>

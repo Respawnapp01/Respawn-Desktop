@@ -1,8 +1,8 @@
-const { app, BrowserWindow, Tray, Menu, nativeImage, Notification, shell, ipcMain } = require('electron')
+const { app, BrowserWindow, Tray, Menu, nativeImage, Notification, shell, ipcMain, dialog } = require('electron')
 const { autoUpdater } = require('electron-updater')
 const path = require('path')
 
-let mainWindow, splashWindow, tray
+let mainWindow, splashWindow, overlayWindow, tray
 const RESPAWN_URL = 'https://respawnapp.uk'
 Menu.setApplicationMenu(null)
 
@@ -40,7 +40,7 @@ body{background:transparent;display:flex;align-items:center;justify-content:cent
 </div></body></html>`)
 }
 
-// ── MAIN WINDOW — simple frame, no custom titlebar ──
+// ── MAIN WINDOW ──
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1280, height: 820,
@@ -69,7 +69,50 @@ function createWindow() {
     if (!url.startsWith(RESPAWN_URL)) { shell.openExternal(url); return { action: 'deny' } }
     return { action: 'allow' }
   })
+
+  // When minimised — ask if user wants overlay
+  mainWindow.on('minimize', () => {
+    if (overlayWindow && !overlayWindow.isDestroyed()) return // Already showing
+    const choice = dialog.showMessageBoxSync(mainWindow, {
+      type: 'question',
+      buttons: ['Enable Overlay', 'Just Minimise'],
+      defaultId: 0,
+      title: 'Gaming Overlay',
+      message: 'Enable the Respawn gaming overlay?',
+      detail: 'A floating icon will appear on screen so you get notifications while gaming.',
+      icon: path.join(__dirname, 'icon.ico')
+    })
+    if (choice === 0) createOverlay()
+  })
+
   mainWindow.on('close', (e) => { if (!app.isQuiting) { e.preventDefault(); mainWindow.hide() } })
+}
+
+// ── OVERLAY WINDOW ──
+function createOverlay() {
+  if (overlayWindow && !overlayWindow.isDestroyed()) {
+    overlayWindow.show()
+    return
+  }
+  overlayWindow = new BrowserWindow({
+    width: 400, height: 600,
+    x: 100, y: 100,
+    frame: false,
+    transparent: true,
+    alwaysOnTop: true,
+    skipTaskbar: true,
+    resizable: false,
+    focusable: true,
+    hasShadow: false,
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      preload: path.join(__dirname, 'overlay-preload.js'),
+    }
+  })
+  overlayWindow.loadFile(path.join(__dirname, 'overlay.html'))
+  overlayWindow.setIgnoreMouseEvents(false)
+  overlayWindow.on('closed', () => { overlayWindow = null })
 }
 
 // ── TRAY ──
@@ -79,6 +122,7 @@ function createTray() {
   tray.setToolTip('Respawn — Find Your Squad 🎮')
   tray.setContextMenu(Menu.buildFromTemplate([
     { label: 'Open Respawn', click: () => { mainWindow.show(); mainWindow.focus() } },
+    { label: 'Toggle Overlay', click: () => { if (overlayWindow && !overlayWindow.isDestroyed()) { overlayWindow.close() } else { createOverlay() } } },
     { type: 'separator' },
     { label: 'Check for Updates', click: () => autoUpdater.checkForUpdatesAndNotify() },
     { type: 'separator' },
@@ -92,6 +136,36 @@ ipcMain.on('minimize', () => mainWindow?.minimize())
 ipcMain.on('maximize', () => { if (mainWindow?.isMaximized()) mainWindow.unmaximize(); else mainWindow?.maximize() })
 ipcMain.on('close', () => mainWindow?.hide())
 ipcMain.on('check-updates', () => autoUpdater.checkForUpdatesAndNotify())
+
+// Overlay IPC
+ipcMain.on('overlay-open-app', (e, data) => {
+  mainWindow?.show(); mainWindow?.focus()
+  if (data) mainWindow?.webContents.send('overlay-focus', data)
+})
+ipcMain.on('overlay-hide', () => { overlayWindow?.close() })
+ipcMain.on('overlay-dnd', (e, isDND) => { /* store state */ })
+ipcMain.on('overlay-accept-friend', (e, uid) => {
+  mainWindow?.webContents.send('overlay-accept-friend', uid)
+})
+ipcMain.on('overlay-reply', (e, data) => {
+  mainWindow?.webContents.send('overlay-reply', data)
+})
+ipcMain.on('overlay-ren-ask', async (e, msg) => {
+  // Forward to main window which has the Gemini API
+  mainWindow?.webContents.send('overlay-ren-ask', msg)
+})
+
+// Forward Ren reply back to overlay
+ipcMain.on('overlay-ren-reply', (e, reply) => {
+  overlayWindow?.webContents.send('overlay-ren-reply', reply)
+})
+
+// Forward notifications from main app to overlay
+ipcMain.on('overlay-notify', (e, data) => {
+  if (overlayWindow && !overlayWindow.isDestroyed()) {
+    overlayWindow.webContents.send('overlay-notify', data)
+  }
+})
 
 // ── AUTO UPDATER ──
 function setupAutoUpdater() {
