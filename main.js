@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Tray, Menu, nativeImage, Notification, shell, ipcMain, dialog } = require('electron')
+const { app, BrowserWindow, Tray, Menu, nativeImage, Notification, shell, ipcMain, dialog, screen } = require('electron')
 const { autoUpdater } = require('electron-updater')
 const path = require('path')
 
@@ -95,8 +95,9 @@ function createOverlay() {
     return
   }
   overlayWindow = new BrowserWindow({
-    width: 400, height: 600,
-    x: 100, y: 100,
+    width: screen.getPrimaryDisplay().workAreaSize.width,
+    height: screen.getPrimaryDisplay().workAreaSize.height,
+    x: 0, y: 0,
     frame: false,
     transparent: true,
     alwaysOnTop: true,

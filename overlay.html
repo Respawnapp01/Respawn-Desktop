@@ -9,6 +9,8 @@ body {
   overflow: hidden;
   font-family: 'Segoe UI', sans-serif;
   width: 100vw; height: 100vh;
+  position: fixed;
+  inset: 0;
 }
 
 /* ── MAIN LOGO ── */
@@ -66,8 +68,12 @@ body {
   position: fixed;
   bottom: 82px; right: 20px;
   width: 300px;
-  display: flex; flex-direction: column-reverse; gap: 8px;
+  display: flex; flex-direction: column; gap: 8px;
   z-index: 99;
+  pointer-events: none;
+}
+#notif-stack .notif-card {
+  pointer-events: all;
 }
 
 .notif-card {
@@ -167,8 +173,8 @@ body {
   font-size: 11px; line-height: 1.4; padding: 6px 8px; border-radius: 8px; max-width: 90%;
 }
 .ren-msg.user { background: rgba(0,229,255,0.12); color: #c9d1d9; align-self: flex-end; }
-.ren-msg.bot { background: #161b22; color: #c9d1d9; align-self: flex-start; }
-.ren-msg.typing { color: #8b949e; font-style: italic; }
+.ren-msg.bot { background: #161b22; color: #e6edf3; align-self: flex-start; border: 1px solid #30363d; }
+.ren-msg.typing { color: #8b949e; font-style: italic; background: #161b22; border: 1px solid #30363d; }
 #ren-inp-row { display: flex; gap: 6px; }
 #ren-inp {
   flex: 1; background: #161b22; border: 1px solid #30363d;
@@ -224,7 +230,8 @@ body {
 <!-- Floating logo -->
 <div id="logo">
   <div class="logo-bg" id="logo-bg">
-    <svg width="28" height="28" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <img src="./logo.png" style="width:32px;height:32px;object-fit:contain;border-radius:6px" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"/>
+    <svg width="28" height="28" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:none">
       <path d="M16 10H48Q54 10 54 16V38Q54 44 48 44H28L18 54V44H16Q10 44 10 38V16Q10 10 16 10Z" stroke="#00e5ff" stroke-width="3.5" stroke-linejoin="round"/>
       <rect x="24" y="24" width="5" height="9" rx="2.5" fill="#00e5ff"/>
       <rect x="35" y="24" width="5" height="9" rx="2.5" fill="#00e5ff"/>
