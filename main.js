@@ -189,8 +189,18 @@ function setupAutoUpdater() {
   autoUpdater.on('update-downloaded', () => {
     mainWindow?.webContents.executeJavaScript(`if(typeof toast==='function')toast('Update ready — restart to install 🚀','success')`).catch(()=>{})
     if (Notification.isSupported()) {
-      const n = new Notification({ title: 'Respawn Update Ready 🚀', body: 'Click to restart and install', icon: path.join(__dirname, 'icon.ico') })
-      n.on('click', () => autoUpdater.quitAndInstall(true, true))
+      const n = new Notification({
+        title: 'Respawn Update Ready 🚀',
+        body: 'Click to restart and install the latest version',
+        icon: path.join(__dirname, 'icon.ico')
+      })
+      n.on('click', () => {
+        // Properly quit before installing
+        app.isQuiting = true
+        if (overlayWindow && !overlayWindow.isDestroyed()) overlayWindow.destroy()
+        if (mainWindow && !mainWindow.isDestroyed()) mainWindow.destroy()
+        autoUpdater.quitAndInstall(false, true)
+      })
       n.show()
     }
   })
