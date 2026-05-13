@@ -238,6 +238,7 @@ body {
 </div>
 
 <!-- Ren chat bubble -->
+<div id="ren-backdrop" onclick="hideRen()" style="display:none;position:fixed;inset:0;z-index:100;background:transparent"></div>
 <div id="ren-bubble">
   <div id="ren-title">
     <svg width="14" height="14" viewBox="0 0 64 64" fill="none">
@@ -520,6 +521,7 @@ function hideCtxMenu() {
 function showRenBubble() {
   renVisible = true
   renBubble.style.display = 'block'
+  document.getElementById('ren-backdrop').style.display = 'block'
   window.overlayAPI?.send('overlay-set-clickthrough', false)
 }
 document.addEventListener('click', e => {
@@ -548,7 +550,8 @@ function showRen() {
 function hideRen() {
   renVisible = false
   renBubble.style.display = 'none'
-  if (ctxMenu.style.display === 'none' || !ctxMenu.style.display) {
+  document.getElementById('ren-backdrop').style.display = 'none'
+  if (!ctxMenu.style.display || ctxMenu.style.display === 'none') {
     window.overlayAPI?.send('overlay-set-clickthrough', true)
   }
 }
@@ -658,6 +661,16 @@ function addNotification(data) {
     ipcRenderer.send('overlay-open-app', data)
     dismissCard(card)
   })
+  // Enter key to send reply
+  const replyInp = card.querySelector('.notif-inp')
+  if (replyInp) {
+    replyInp.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        const sendBtn = replyInp.nextElementSibling
+        if (sendBtn) sendBtn.click()
+      }
+    })
+  }
   notifStack.appendChild(card)
 
   // Auto-dismiss after 6 seconds — paused while typing
