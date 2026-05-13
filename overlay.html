@@ -35,37 +35,39 @@ body {
 
 .logo-bg {
   width: 52px; height: 52px;
-  background: #0d1117;
-  border: 2px solid #00e5ff;
-  border-radius: 14px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
   display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 4px 20px rgba(0,229,255,0.3), 0 2px 8px rgba(0,0,0,0.8);
-  transition: box-shadow 0.2s, border-color 0.2s;
+  transition: transform 0.2s;
   position: relative;
 }
-.logo-bg:hover { box-shadow: 0 4px 30px rgba(0,229,255,0.5), 0 2px 8px rgba(0,0,0,0.8); }
+.logo-bg:hover { transform: scale(1.08); }
 .logo-bg.pulse { animation: pulse 0.6s ease 3; }
 @keyframes pulse {
-  0%, 100% { box-shadow: 0 4px 20px rgba(0,229,255,0.3); }
-  50% { box-shadow: 0 4px 40px rgba(0,229,255,0.9), 0 0 20px rgba(0,229,255,0.5); }
+  0%, 100% { filter: drop-shadow(0 0 4px rgba(255,255,255,0.4)); }
+  50% { filter: drop-shadow(0 0 12px rgba(255,255,255,0.9)); }
 }
+#logo-img { width: 52px; height: 52px; object-fit: contain; }
 
 /* Notification badge */
 #notif-count {
-  position: absolute; top: -6px; right: -6px;
+  position: absolute; top: -4px; right: -4px;
   background: #ff4d4d; color: #fff;
   font-size: 10px; font-weight: 700;
   width: 18px; height: 18px; border-radius: 50%;
   display: none; align-items: center; justify-content: center;
-  border: 2px solid #0d1117;
+  border: 2px solid #000;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.8);
 }
 
 /* DND indicator */
 #dnd-dot {
   position: absolute; bottom: -4px; right: -4px;
   width: 12px; height: 12px; border-radius: 50%;
-  background: #ff4d4d; border: 2px solid #0d1117;
+  background: #ff4d4d; border: 2px solid #000;
   display: none;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.8);
 }
 
 /* ── NOTIFICATIONS STACK ── */
@@ -370,7 +372,10 @@ applySize(size)
 function applyOpacity(v) {
   opacity = v
   localStorage.setItem('overlay-opacity', v)
-  logo.style.opacity = v / 100
+  // Only affect the logo image, not popups
+  const logoImg = document.getElementById('logo-img')
+  if (logoImg) logoImg.style.opacity = v / 100
+  else logoBg.style.opacity = v / 100
 }
 applyOpacity(opacity)
 document.getElementById('opacity-slider').value = opacity
@@ -505,6 +510,11 @@ function showCtxMenu(x, y) {
 function hideCtxMenu() { ctxMenu.style.display = 'none' }
 document.addEventListener('click', e => {
   if (!ctxMenu.contains(e.target) && !logo.contains(e.target)) hideCtxMenu()
+  if (!renBubble.contains(e.target) && !logo.contains(e.target)) hideRen()
+})
+// Also close on Escape
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { hideCtxMenu(); hideRen(); }
 })
 
 // ── REN ──
@@ -526,7 +536,6 @@ function hideRen() {
 document.addEventListener('click', e => {
   if (!renBubble.contains(e.target) && !logo.contains(e.target)) hideRen()
 })
-document.addEventListener('keydown', e => { if (e.key === 'Escape') hideRen() })
 
 // Send Ren message
 async function sendRenMsg() {
@@ -562,9 +571,12 @@ function addRenMsg(text, type) {
 waitForAPI(() => {
 ipcRenderer.on('overlay-notify', (data) => {
   if (isDND) return
-  slideInForNotif() // Slide back from edge when notification arrives
-  addNotification(data)
-  pulseLogo()
+  // Defer so all functions are defined
+  setTimeout(() => {
+    if (typeof slideInForNotif === 'function') slideInForNotif()
+    addNotification(data)
+    pulseLogo()
+  }, 0)
 })
 
 ipcRenderer.on('overlay-ren-reply', (reply) => {
@@ -774,8 +786,6 @@ function slideInForNotif() {
 }
 
 // Override addNotification to slide back when notif arrives
-const _origAddNotification = addNotification
-// Patch after definition
 
 // When window loses focus (game went fullscreen)
 window.addEventListener('blur', () => {
