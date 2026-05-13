@@ -195,11 +195,15 @@ function setupAutoUpdater() {
         icon: path.join(__dirname, 'icon.ico')
       })
       n.on('click', () => {
-        // Properly quit before installing
+        // Force close everything before installing
         app.isQuiting = true
+        if (tray) tray.destroy()
         if (overlayWindow && !overlayWindow.isDestroyed()) overlayWindow.destroy()
-        if (mainWindow && !mainWindow.isDestroyed()) mainWindow.destroy()
-        autoUpdater.quitAndInstall(false, true)
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.removeAllListeners('close')
+          mainWindow.destroy()
+        }
+        setTimeout(() => autoUpdater.quitAndInstall(false, true), 500)
       })
       n.show()
     }

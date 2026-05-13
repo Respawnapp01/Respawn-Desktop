@@ -1,6 +1,6 @@
 {
   "name": "respawn",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "The social app for gamers",
   "main": "main.js",
   "scripts": {
@@ -38,7 +38,10 @@
       "installerIcon": "icon.ico",
       "uninstallerIcon": "icon.ico",
       "deleteAppDataOnUninstall": false,
-      "perMachine": false
+      "perMachine": false,
+      "allowElevation": true,
+      "runAfterFinish": true,
+      "warningsAsErrors": false
     }
   },
   "dependencies": {
