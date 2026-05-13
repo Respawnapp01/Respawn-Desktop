@@ -325,16 +325,19 @@ const dndDot = document.getElementById('dnd-dot')
 // ── LOAD LOGO ──
 const logoImg = document.getElementById('logo-img')
 if (logoImg) {
-  // Try different paths for Electron packaged vs dev
-  const paths = ['./logo.png', '../logo.png']
-  let loaded = false
-  paths.forEach(p => {
-    if (!loaded) {
-      const img = new Image()
-      img.onload = () => { if (!loaded) { loaded = true; logoImg.src = p } }
-      img.src = p
+  // In Electron, use ipcRenderer to get the app path
+  window.overlayAPI?.on('overlay-app-path', (appPath) => {
+    logoImg.src = 'file://' + appPath + '/logo.png'
+    logoImg.onerror = () => {
+      // Fallback to SVG if logo.png not found
+      logoImg.style.display = 'none'
+      const svg = document.createElement('div')
+      svg.innerHTML = '<svg width="42" height="42" viewBox="0 0 64 64" fill="none"><path d="M16 10H48Q54 10 54 16V38Q54 44 48 44H28L18 54V44H16Q10 44 10 38V16Q10 10 16 10Z" stroke="#ffffff" stroke-width="3.5" stroke-linejoin="round"/><rect x="24" y="24" width="5" height="9" rx="2.5" fill="#ffffff"/><rect x="35" y="24" width="5" height="9" rx="2.5" fill="#ffffff"/></svg>'
+      logoImg.parentNode.insertBefore(svg.firstChild, logoImg)
     }
   })
+  // Request app path
+  window.overlayAPI?.send('overlay-get-app-path', null)
 }
 
 // ── INIT POSITION ──
@@ -506,13 +509,25 @@ function showCtxMenu(x, y) {
   const menuW = 180, menuH = 220
   ctxMenu.style.left = Math.min(x, window.innerWidth - menuW) + 'px'
   ctxMenu.style.top = Math.min(y, window.innerHeight - menuH) + 'px'
+  // Enable full click capture while menu is open
+  window.overlayAPI?.send('overlay-set-clickthrough', false)
 }
-function hideCtxMenu() { ctxMenu.style.display = 'none' }
+function hideCtxMenu() {
+  ctxMenu.style.display = 'none'
+  // Re-enable click-through if no other popups open
+  if (!renVisible) window.overlayAPI?.send('overlay-set-clickthrough', true)
+}
+function showRenBubble() {
+  renVisible = true
+  renBubble.style.display = 'block'
+  window.overlayAPI?.send('overlay-set-clickthrough', false)
+}
 document.addEventListener('click', e => {
   if (!ctxMenu.contains(e.target) && !logo.contains(e.target)) hideCtxMenu()
-  if (!renBubble.contains(e.target) && !logo.contains(e.target)) hideRen()
+  if (!renBubble.contains(e.target) && !logo.contains(e.target)) {
+    hideRen()
+  }
 })
-// Also close on Escape
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') { hideCtxMenu(); hideRen(); }
 })
@@ -521,6 +536,7 @@ document.addEventListener('keydown', e => {
 function showRen() {
   renVisible = true
   renBubble.style.display = 'block'
+  window.overlayAPI?.send('overlay-set-clickthrough', false)
   const r = logo.getBoundingClientRect()
   const sz = sizes[size]
   renBubble.style.left = Math.max(8, r.left - 270) + 'px'
@@ -532,6 +548,9 @@ function showRen() {
 function hideRen() {
   renVisible = false
   renBubble.style.display = 'none'
+  if (ctxMenu.style.display === 'none' || !ctxMenu.style.display) {
+    window.overlayAPI?.send('overlay-set-clickthrough', true)
+  }
 }
 document.addEventListener('click', e => {
   if (!renBubble.contains(e.target) && !logo.contains(e.target)) hideRen()
@@ -641,9 +660,27 @@ function addNotification(data) {
   })
   notifStack.appendChild(card)
 
-  // Auto-dismiss after 6 seconds
+  // Auto-dismiss after 6 seconds — paused while typing
   const timer = setTimeout(() => dismissCard(card), 6000)
   card._timer = timer
+
+  // Pause dismiss while typing in reply box
+  const inp = card.querySelector('.notif-inp')
+  if (inp) {
+    inp.addEventListener('focus', () => {
+      if (card._timer) { clearTimeout(card._timer); card._timer = null }
+    })
+    inp.addEventListener('blur', () => {
+      // Restart timer after 3s if input is empty
+      if (!inp.value.trim()) {
+        card._timer = setTimeout(() => dismissCard(card), 3000)
+      }
+    })
+    inp.addEventListener('input', () => {
+      // Cancel timer while there's text in the box
+      if (card._timer && inp.value.trim()) { clearTimeout(card._timer); card._timer = null }
+    })
+  }
 
   // Max 4 notifications shown
   while (notifStack.children.length > 4) {

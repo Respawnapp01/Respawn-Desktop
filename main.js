@@ -113,6 +113,10 @@ function createOverlay() {
   })
   overlayWindow.loadFile(path.join(__dirname, 'overlay.html'))
   overlayWindow.setIgnoreMouseEvents(true, { forward: true })
+  // Send app path so overlay can load logo
+  overlayWindow.webContents.on('did-finish-load', () => {
+    overlayWindow.webContents.send('overlay-app-path', __dirname)
+  })
   overlayWindow.on('closed', () => { overlayWindow = null })
 }
 
@@ -135,6 +139,9 @@ function createTray() {
 // ── IPC ──
 ipcMain.on('overlay-set-clickthrough', (e, passThrough) => {
   overlayWindow?.setIgnoreMouseEvents(passThrough, { forward: true })
+})
+ipcMain.on('overlay-get-app-path', (e) => {
+  e.sender.send('overlay-app-path', __dirname)
 })
 ipcMain.on('minimize', () => mainWindow?.minimize())
 ipcMain.on('maximize', () => { if (mainWindow?.isMaximized()) mainWindow.unmaximize(); else mainWindow?.maximize() })
