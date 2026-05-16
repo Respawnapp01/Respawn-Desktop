@@ -3,7 +3,7 @@ const { autoUpdater } = require('electron-updater')
 const path = require('path')
 
 let mainWindow, splashWindow, overlayWindow, tray
-const RESPAWN_URL = 'https://respawnapp.uk'
+const RESPAWN_URL = 'https://respawnapp.uk/app'
 Menu.setApplicationMenu(null)
 
 // ── SPLASH SCREEN ──
