@@ -238,6 +238,7 @@ body {
 </div>
 
 <!-- Ren chat bubble -->
+<div id="global-backdrop" onclick="closeAllPopups()" style="display:none;position:fixed;inset:0;z-index:98;background:transparent;cursor:default"></div>
 <div id="ren-backdrop" onclick="hideRen()" style="display:none;position:fixed;inset:0;z-index:100;background:transparent"></div>
 <div id="ren-bubble">
   <div id="ren-title">
@@ -505,18 +506,25 @@ document.getElementById('ctx-hide').addEventListener('click', () => {
 })
 
 // ── CONTEXT MENU ──
+function closeAllPopups() {
+  hideCtxMenu()
+  hideRen()
+}
+
 function showCtxMenu(x, y) {
   ctxMenu.style.display = 'block'
   const menuW = 180, menuH = 220
   ctxMenu.style.left = Math.min(x, window.innerWidth - menuW) + 'px'
   ctxMenu.style.top = Math.min(y, window.innerHeight - menuH) + 'px'
-  // Enable full click capture while menu is open
+  document.getElementById('global-backdrop').style.display = 'block'
   window.overlayAPI?.send('overlay-set-clickthrough', false)
 }
 function hideCtxMenu() {
   ctxMenu.style.display = 'none'
-  // Re-enable click-through if no other popups open
-  if (!renVisible) window.overlayAPI?.send('overlay-set-clickthrough', true)
+  if (!renVisible) {
+    document.getElementById('global-backdrop').style.display = 'none'
+    window.overlayAPI?.send('overlay-set-clickthrough', true)
+  }
 }
 function showRenBubble() {
   renVisible = true
@@ -552,6 +560,7 @@ function hideRen() {
   renBubble.style.display = 'none'
   document.getElementById('ren-backdrop').style.display = 'none'
   if (!ctxMenu.style.display || ctxMenu.style.display === 'none') {
+    document.getElementById('global-backdrop').style.display = 'none'
     window.overlayAPI?.send('overlay-set-clickthrough', true)
   }
 }
@@ -672,6 +681,9 @@ function addNotification(data) {
     })
   }
   notifStack.appendChild(card)
+  // Enable clicks while notifications are showing
+  document.getElementById('global-backdrop').style.display = 'block'
+  window.overlayAPI?.send('overlay-set-clickthrough', false)
 
   // Auto-dismiss after 6 seconds — paused while typing
   const timer = setTimeout(() => dismissCard(card), 6000)
@@ -707,7 +719,14 @@ function dismissCard(card) {
   if (!card || !card.parentNode) return
   if (card._timer) clearTimeout(card._timer)
   card.classList.add('removing')
-  setTimeout(() => { if (card.parentNode) card.parentNode.removeChild(card) }, 250)
+  setTimeout(() => {
+    if (card.parentNode) card.parentNode.removeChild(card)
+    // Re-enable click-through if no more popups
+    if (notifStack.children.length === 0 && !renVisible && (!ctxMenu.style.display || ctxMenu.style.display === 'none')) {
+      document.getElementById('global-backdrop').style.display = 'none'
+      window.overlayAPI?.send('overlay-set-clickthrough', true)
+    }
+  }, 250)
 }
 
 window.dismissNotif = function(btn) {
