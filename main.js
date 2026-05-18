@@ -66,7 +66,7 @@ function createWindow() {
   })
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    if (!url.startsWith(RESPAWN_URL)) { shell.openExternal(url); return { action: 'deny' } }
+    if (!url.startsWith('https://respawnapp.uk')) { shell.openExternal(url); return { action: 'deny' } }
     return { action: 'allow' }
   })
 
