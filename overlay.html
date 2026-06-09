@@ -238,7 +238,7 @@ body {
 </div>
 
 <!-- Ren chat bubble -->
-<div id="global-backdrop" onclick="closeAllPopups()" style="display:none;position:fixed;inset:0;z-index:98;background:transparent;cursor:default"></div>
+<div id="global-backdrop" onclick="closeAllPopups()" style="display:none;position:fixed;inset:0;z-index:98;background:rgba(0,0,0,0.01);cursor:default;pointer-events:all"></div>
 <div id="ren-backdrop" onclick="hideRen()" style="display:none;position:fixed;inset:0;z-index:100;background:transparent"></div>
 <div id="ren-bubble">
   <div id="ren-title">
@@ -377,10 +377,14 @@ applySize(size)
 function applyOpacity(v) {
   opacity = v
   localStorage.setItem('overlay-opacity', v)
-  // Only affect the logo image, not popups
   const logoImg = document.getElementById('logo-img')
   if (logoImg) logoImg.style.opacity = v / 100
-  else logoBg.style.opacity = v / 100
+  else if (logoBg) logoBg.style.opacity = v / 100
+  // Keep popups fully visible
+  const ns = document.getElementById('notif-stack')
+  const rb = document.getElementById('ren-bubble')
+  if(ns) ns.style.opacity = '1'
+  if(rb) rb.style.opacity = '1'
 }
 applyOpacity(opacity)
 document.getElementById('opacity-slider').value = opacity
