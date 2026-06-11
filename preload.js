@@ -11,4 +11,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onOverlayAcceptFriend: (cb) => ipcRenderer.on('overlay-accept-friend', (e, uid) => cb(uid)),
   onOverlayReply: (cb) => ipcRenderer.on('overlay-reply', (e, data) => cb(data)),
   onOverlayRenAsk: (cb) => ipcRenderer.on('overlay-ren-ask', (e, msg) => cb(msg)),
+  // Call overlay
+  overlayCallStart: (participants) => ipcRenderer.send('overlay-call-start', participants),
+  overlayCallSpeaking: (data) => ipcRenderer.send('overlay-call-speaking', data),
+  overlayCallEnd: () => ipcRenderer.send('overlay-call-end'),
 })

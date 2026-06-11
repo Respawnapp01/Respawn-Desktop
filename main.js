@@ -178,6 +178,35 @@ ipcMain.on('overlay-notify', (e, data) => {
   }
 })
 
+// ── CALL OVERLAY ──
+// Start showing floating call pics (auto-create overlay if needed)
+ipcMain.on('overlay-call-start', (e, participants) => {
+  if (!overlayWindow || overlayWindow.isDestroyed()) createOverlay()
+  // Wait for overlay to be ready
+  const send = () => {
+    if (overlayWindow && !overlayWindow.isDestroyed()) {
+      overlayWindow.webContents.send('overlay-call-start', participants)
+    }
+  }
+  if (overlayWindow.webContents.isLoading()) {
+    overlayWindow.webContents.once('did-finish-load', () => setTimeout(send, 300))
+  } else {
+    send()
+  }
+})
+// Update who is talking { uid, talking }
+ipcMain.on('overlay-call-speaking', (e, data) => {
+  if (overlayWindow && !overlayWindow.isDestroyed()) {
+    overlayWindow.webContents.send('overlay-call-speaking', data)
+  }
+})
+// End call — remove floating pics
+ipcMain.on('overlay-call-end', () => {
+  if (overlayWindow && !overlayWindow.isDestroyed()) {
+    overlayWindow.webContents.send('overlay-call-end')
+  }
+})
+
 // ── AUTO UPDATER ──
 function setupAutoUpdater() {
   autoUpdater.autoDownload = true
