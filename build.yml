@@ -15,22 +15,36 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 18
+
+      - name: Read version from package.json
+        id: pkg
+        shell: bash
+        run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
       - name: Install dependencies
         run: npm install
+
       - name: Build exe
         run: npx electron-builder --win --publish never
+
       - name: Delete old release if exists
-        run: gh release delete v1.0.8 --yes || true
+        shell: bash
+        run: gh release delete "v${{ steps.pkg.outputs.version }}" --yes || true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Delete old tag if exists
-        run: git push origin :refs/tags/v1.0.8 || true
+        shell: bash
+        run: git push origin ":refs/tags/v${{ steps.pkg.outputs.version }}" || true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Create Release
-        run: gh release create v1.0.8 dist/*.exe dist/*.yml dist/*.blockmap --title "Respawn v1.0.8" --notes "Splash screen, titlebar fixes, auto-update notifications"
+        shell: bash
+        run: gh release create "v${{ steps.pkg.outputs.version }}" dist/*.exe dist/*.yml dist/*.blockmap --title "Respawn v${{ steps.pkg.outputs.version }}" --notes "Latest update — floating call pics, bug fixes"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - uses: actions/upload-artifact@v4
         with:
           name: respawn-windows

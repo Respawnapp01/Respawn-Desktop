@@ -48,6 +48,13 @@ function createWindow() {
     autoHideMenuBar: true,
     backgroundColor: '#090b0f',
     icon: path.join(__dirname, 'icon.ico'),
+    title: '',
+    titleBarStyle: 'hidden',
+    titleBarOverlay: {
+      color: '#0d1117',
+      symbolColor: '#8b949e',
+      height: 40
+    },
     webPreferences: {
       nodeIntegration: false, contextIsolation: true,
       preload: path.join(__dirname, 'preload.js'),

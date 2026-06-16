@@ -32,6 +32,42 @@ body {
 #logo.dnd .logo-bg { opacity: 0.4; filter: grayscale(1); }
 #logo:hover { transform: scale(1.1); }
 #logo.hidden:hover { transform: translateX(70px) scale(1.1); }
+#logo.fan-open { transform: scale(1.05); }
+
+/* ── RADIAL FAN MENU ── */
+#radial-fan {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 0; height: 0;
+  pointer-events: none;
+  z-index: 101;
+}
+.fan-btn {
+  position: absolute;
+  top: -22px; left: -22px;
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: #0d1117;
+  border: 1px solid #30363d;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transform: scale(0.3);
+  transition: transform 0.3s cubic-bezier(.175,.885,.32,1.275), opacity 0.25s, background 0.15s, border-color 0.15s;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+  pointer-events: none;
+}
+.fan-btn:hover { background: #161b22; border-color: #00e5ff; }
+.fan-end-call { background: #f43f5e !important; border-color: #f43f5e !important; }
+.fan-end-call:hover { background: #e11d48 !important; }
+#radial-fan.open .fan-btn { opacity: 1; pointer-events: all; }
+/* Fan positions — arc spreading out from logo */
+#radial-fan.open #fan-ren      { transform: translate(-64px, -10px) scale(1); }
+#radial-fan.open #fan-app      { transform: translate(-52px, -48px) scale(1); }
+#radial-fan.open #fan-dnd      { transform: translate(-10px, -64px) scale(1); }
+#radial-fan.open #fan-settings { transform: translate(32px, -52px) scale(1); }
+#radial-fan.open #fan-endcall  { transform: translate(-64px, 32px) scale(1); }
+
 
 .logo-bg {
   width: 52px; height: 52px;
@@ -281,6 +317,24 @@ body {
     <div id="notif-count"></div>
     <div id="dnd-dot"></div>
   </div>
+  <!-- Radial fan menu -->
+  <div id="radial-fan">
+    <div class="fan-btn" id="fan-ren" title="Ask Ren">
+      <svg width="18" height="18" viewBox="0 0 64 64" fill="none" stroke="#00e5ff" stroke-width="4" stroke-linejoin="round"><path d="M16 10H48Q54 10 54 16V38Q54 44 48 44H28L18 54V44H16Q10 44 10 38V16Q10 10 16 10Z"/></svg>
+    </div>
+    <div class="fan-btn" id="fan-app" title="Open Respawn">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c9d1d9" stroke-width="2"><path d="M15 3h6v6M21 3l-9 9M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/></svg>
+    </div>
+    <div class="fan-btn" id="fan-dnd" title="Do Not Disturb">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+    </div>
+    <div class="fan-btn" id="fan-settings" title="Settings">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c9d1d9" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </div>
+    <div class="fan-btn fan-end-call" id="fan-endcall" title="End Call" style="display:none">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08c-.18-.17-.29-.42-.29-.7 0-.28.11-.53.29-.71C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.1-.7-.28-.79-.74-1.69-1.36-2.67-1.85-.33-.16-.56-.51-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z" transform="rotate(135 12 12)"/></svg>
+    </div>
+  </div>
 </div>
 
 <!-- Ren chat bubble -->
@@ -491,7 +545,7 @@ function onDragEnd(e) {
   }
 }
 
-// ── HOVER — pull back from edge + show Ren ──
+// ── HOVER — pull back from edge ──
 logo.addEventListener('mouseenter', () => {
   if (!dragging) {
     const r = logo.getBoundingClientRect()
@@ -502,27 +556,62 @@ logo.addEventListener('mouseenter', () => {
       logo.style.left = snapX + 'px'
       logo.style.top = snapY + 'px'
     }
-    // Show Ren bubble hint after 800ms hover
-    renTimeout = setTimeout(() => { if (!renVisible) showRen() }, 800)
   }
 })
-let renTimeout = null
-logo.addEventListener('mouseleave', () => {
-  clearTimeout(renTimeout)
-})
 
-// ── DOUBLE CLICK only — open app ──
-let lastClick = 0
+// ── CLICK — toggle radial fan ──
+let fanOpen = false
+let clickStartX = 0, clickStartY = 0
+logo.addEventListener('mousedown', e => { clickStartX = e.clientX; clickStartY = e.clientY })
 logo.addEventListener('click', e => {
+  // Ignore if it was a drag (moved more than 5px)
+  if (Math.abs(e.clientX - clickStartX) > 5 || Math.abs(e.clientY - clickStartY) > 5) return
   if (dragging) return
-  const now = Date.now()
-  if (now - lastClick < 300) {
-    ipcRenderer.send('overlay-open-app')
-  }
-  lastClick = now
+  toggleFan()
 })
 
-// ── RIGHT CLICK — context menu ──
+function toggleFan() {
+  fanOpen = !fanOpen
+  const fan = document.getElementById('radial-fan')
+  fan.classList.toggle('open', fanOpen)
+  logo.classList.toggle('fan-open', fanOpen)
+  if (fanOpen) {
+    document.getElementById('global-backdrop').style.display = 'block'
+    window.overlayAPI?.send('overlay-set-clickthrough', false)
+  } else {
+    if (!renVisible) {
+      document.getElementById('global-backdrop').style.display = 'none'
+      window.overlayAPI?.send('overlay-set-clickthrough', true)
+    }
+  }
+}
+
+function closeFan() {
+  if (!fanOpen) return
+  fanOpen = false
+  document.getElementById('radial-fan').classList.remove('open')
+  logo.classList.remove('fan-open')
+}
+
+// Fan button actions
+document.getElementById('fan-ren').addEventListener('click', e => { e.stopPropagation(); closeFan(); showRen() })
+document.getElementById('fan-app').addEventListener('click', e => { e.stopPropagation(); closeFan(); ipcRenderer.send('overlay-open-app') })
+document.getElementById('fan-endcall').addEventListener('click', e => { e.stopPropagation(); closeFan(); ipcRenderer.send('overlay-open-app', { action: 'endcall' }) })
+document.getElementById('fan-dnd').addEventListener('click', e => {
+  e.stopPropagation()
+  isDND = !isDND
+  logo.classList.toggle('dnd', isDND)
+  dndDot.style.display = isDND ? 'flex' : 'none'
+  closeFan()
+})
+document.getElementById('fan-settings').addEventListener('click', e => {
+  e.stopPropagation()
+  closeFan()
+  const r = logo.getBoundingClientRect()
+  showCtxMenu(r.left - 100, r.top)
+})
+
+// ── RIGHT CLICK — context menu (kept for settings/opacity) ──
 logo.addEventListener('contextmenu', e => {
   e.preventDefault()
   showCtxMenu(e.clientX, e.clientY)
@@ -559,6 +648,7 @@ document.getElementById('ctx-hide').addEventListener('click', () => {
 function closeAllPopups() {
   hideCtxMenu()
   hideRen()
+  closeFan()
 }
 
 function showCtxMenu(x, y) {
@@ -669,7 +759,11 @@ ipcRenderer.on('overlay-ren-reply', (reply) => {
 
 // ── CALL PICS ──
 ipcRenderer.on('overlay-call-start', (participants) => {
-  setTimeout(() => renderCallPics(participants || []), 0)
+  setTimeout(() => {
+    renderCallPics(participants || [])
+    const ec = document.getElementById('fan-endcall')
+    if (ec) ec.style.display = 'flex'
+  }, 0)
 })
 ipcRenderer.on('overlay-call-speaking', (data) => {
   if (!data) return
@@ -679,6 +773,8 @@ ipcRenderer.on('overlay-call-speaking', (data) => {
 ipcRenderer.on('overlay-call-end', () => {
   const c = document.getElementById('call-pics')
   if (c) c.innerHTML = ''
+  const ec = document.getElementById('fan-endcall')
+  if (ec) ec.style.display = 'none'
 })
 
 function renderCallPics(participants) {
